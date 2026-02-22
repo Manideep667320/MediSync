@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useRouter } from '../components/Router';
 import { useAuth } from '../context/AuthContext';
-import { LogIn, UserPlus, AlertCircle, ArrowLeft, User, Upload } from 'lucide-react';
+import { LogIn, UserPlus, AlertCircle, User, Upload } from 'lucide-react';
+import Modal from '../components/Modal';
 
 export default function LocalAuth() {
   const { navigate } = useRouter();
@@ -66,22 +67,19 @@ export default function LocalAuth() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center px-4 py-8">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
-        <button
-          onClick={() => navigate('/access')}
-          className="flex items-center gap-2 text-gray-600 hover:text-blue-600 mb-6 transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          Back
-        </button>
-
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50">
+      <Modal
+        isOpen={true}
+        onClose={() => navigate('/access')}
+        title={isLogin ? 'Local User Login' : 'Local User Registration'}
+        size="sm"
+      >
         <div className="flex items-center justify-center mb-6">
           <div className="w-16 h-16 bg-green-600 rounded-2xl flex items-center justify-center shadow-lg">
             <Upload className="w-8 h-8 text-white" />
           </div>
         </div>
-        
+
         <h2 className="text-3xl font-bold text-center text-gray-900 mb-2">
           {isLogin ? 'Welcome Back' : 'Create Account'}
         </h2>
@@ -232,7 +230,7 @@ export default function LocalAuth() {
             </ul>
           </div>
         </div>
-      </div>
+      </Modal>
     </div>
   );
 }
