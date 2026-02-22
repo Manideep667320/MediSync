@@ -40,8 +40,10 @@ if (process.env.NODE_ENV === 'development') {
   app.use(morgan('combined'));
 }
 
-// Serve static files (uploads)
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Serve static files (uploads) with serverless-safe directory
+const serverlessEnv = process.env.VERCEL === '1' || process.env.SERVERLESS_ENV === 'true';
+const staticUploadsDir = serverlessEnv ? path.join('/tmp', 'uploads') : path.join(__dirname, 'uploads');
+app.use('/uploads', express.static(staticUploadsDir));
 
 // Rate limiting
 app.use('/api', apiLimiter);
