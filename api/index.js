@@ -17,8 +17,8 @@ const hospitalRoutes = require('../backend/routes/hospital');
 const localRoutes = require('../backend/routes/local');
 
 // Import middleware
-const errorHandler = require('../backend/middleware/errorHandler');
-const rateLimiter = require('../backend/middleware/rateLimiter');
+const { errorHandler } = require('../backend/middleware/errorHandler');
+const { apiLimiter } = require('../backend/middleware/rateLimiter');
 
 const app = express();
 
@@ -40,7 +40,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Apply rate limiting
-app.use('/api/', rateLimiter);
+app.use('/api/', apiLimiter);
 
 // Health check
 app.get('/api/health', (req, res) => {
