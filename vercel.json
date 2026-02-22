@@ -1,5 +1,5 @@
 {
-  "installCommand": "npm install --prefix backend && cd frontend && npm install --include=dev",
+  "installCommand": "npm install --include=dev",
   "buildCommand": "cd frontend && npx vite build",
   "outputDirectory": "frontend/dist",
   "framework": null,
