@@ -102,71 +102,229 @@ const medicines = [
 ];
 
 const pharmacies = [
+  // ─── within 1 km ────────────────────────────────────────────────────────────
   {
-    name: 'HealthPlus Pharmacy',
-    licenseNumber: 'PH-NY-001',
-    address: {
-      street: '100 Broadway',
-      city: 'New York',
-      state: 'NY',
-      zipCode: '10001',
-      country: 'USA'
-    },
-    location: {
-      type: 'Point',
-      coordinates: [-73.935242, 40.730610]
-    },
-    phone: '+1-212-555-3000',
-    email: 'info@healthpluspharmacy.com',
-    features: ['24/7 Open', 'Home Delivery', 'Verified'],
-    rating: 4.7,
-    verified: true,
-    deliveryAvailable: true,
-    deliveryRadius: 10
-  },
-  {
-    name: 'CareWell Medical Store',
-    licenseNumber: 'PH-NY-002',
-    address: {
-      street: '200 5th Avenue',
-      city: 'New York',
-      state: 'NY',
-      zipCode: '10002',
-      country: 'USA'
-    },
-    location: {
-      type: 'Point',
-      coordinates: [-73.985242, 40.748817]
-    },
-    phone: '+1-212-555-4000',
-    email: 'contact@carewellstore.com',
-    features: ['Insurance Accepted', 'Verified'],
-    rating: 4.5,
-    verified: true,
-    deliveryAvailable: true,
-    deliveryRadius: 5
-  },
-  {
-    name: 'MediQuick Pharmacy',
-    licenseNumber: 'PH-NY-003',
-    address: {
-      street: '300 Park Avenue',
-      city: 'New York',
-      state: 'NY',
-      zipCode: '10003',
-      country: 'USA'
-    },
-    location: {
-      type: 'Point',
-      coordinates: [-73.975242, 40.758817]
-    },
-    phone: '+1-212-555-5000',
-    email: 'service@mediquick.com',
-    features: ['Home Delivery', 'Insurance Accepted'],
+    name: 'MediCare Plus Pharmacy',
+    licenseNumber: 'PH-NY-101',
+    address: { street: '42 Oak Street', city: 'New York', state: 'NY', zipCode: '10001', country: 'USA' },
+    location: { type: 'Point', coordinates: [-74.003, 40.7168] },
+    phone: '+1 (555) 101-2030',
+    email: 'info@medicareplus.com',
+    features: ['24/7 Open', 'Home Delivery', 'Digital Rx'],
     rating: 4.8,
     verified: true,
     deliveryAvailable: true,
-    deliveryRadius: 8
+    deliveryRadius: 10,
+    operatingHours: {
+      monday:    { open: '00:00', close: '23:59', isOpen: true },
+      tuesday:   { open: '00:00', close: '23:59', isOpen: true },
+      wednesday: { open: '00:00', close: '23:59', isOpen: true },
+      thursday:  { open: '00:00', close: '23:59', isOpen: true },
+      friday:    { open: '00:00', close: '23:59', isOpen: true },
+      saturday:  { open: '00:00', close: '23:59', isOpen: true },
+      sunday:    { open: '00:00', close: '23:59', isOpen: true }
+    }
+  },
+  {
+    name: 'City Health Pharmacy',
+    licenseNumber: 'PH-NY-102',
+    address: { street: '9 Maple Ave', city: 'New York', state: 'NY', zipCode: '10001', country: 'USA' },
+    location: { type: 'Point', coordinates: [-74.003, 40.7048] },
+    phone: '+1 (555) 202-3141',
+    email: 'info@cityhealthrx.com',
+    features: ['Insurance Accepted', 'Generic Meds'],
+    rating: 4.5,
+    verified: true,
+    deliveryAvailable: false,
+    deliveryRadius: 0,
+    operatingHours: {
+      monday:    { open: '08:00', close: '21:00', isOpen: true },
+      tuesday:   { open: '08:00', close: '21:00', isOpen: true },
+      wednesday: { open: '08:00', close: '21:00', isOpen: true },
+      thursday:  { open: '08:00', close: '21:00', isOpen: true },
+      friday:    { open: '08:00', close: '21:00', isOpen: true },
+      saturday:  { open: '09:00', close: '18:00', isOpen: true },
+      sunday:    { open: '10:00', close: '16:00', isOpen: true }
+    }
+  },
+  // ─── within 3 km ────────────────────────────────────────────────────────────
+  {
+    name: 'QuickScript Pharmacy',
+    licenseNumber: 'PH-NY-103',
+    address: { street: '77 Pine Road', city: 'New York', state: 'NY', zipCode: '10003', country: 'USA' },
+    location: { type: 'Point', coordinates: [-74.000, 40.7268] },
+    phone: '+1 (555) 303-4252',
+    email: 'service@quickscriptrx.com',
+    features: ['Express Counter', 'Digital Rx', 'Loyalty Points'],
+    rating: 4.6,
+    verified: true,
+    deliveryAvailable: false,
+    deliveryRadius: 0,
+    operatingHours: {
+      monday:    { open: '07:00', close: '22:00', isOpen: true },
+      tuesday:   { open: '07:00', close: '22:00', isOpen: true },
+      wednesday: { open: '07:00', close: '22:00', isOpen: true },
+      thursday:  { open: '07:00', close: '22:00', isOpen: true },
+      friday:    { open: '07:00', close: '22:00', isOpen: true },
+      saturday:  { open: '08:00', close: '20:00', isOpen: true },
+      sunday:    { open: '09:00', close: '17:00', isOpen: true }
+    }
+  },
+  {
+    name: 'Wellness Rx Center',
+    licenseNumber: 'PH-NY-104',
+    address: { street: '23 Birch Lane', city: 'New York', state: 'NY', zipCode: '10014', country: 'USA' },
+    location: { type: 'Point', coordinates: [-74.014, 40.6928] },
+    phone: '+1 (555) 404-5363',
+    email: 'hello@wellnessrx.com',
+    features: ['Pharmacist Consult', 'Insurance Accepted'],
+    rating: 4.3,
+    verified: true,
+    deliveryAvailable: false,
+    deliveryRadius: 0,
+    operatingHours: {
+      monday:    { open: '09:00', close: '20:00', isOpen: true },
+      tuesday:   { open: '09:00', close: '20:00', isOpen: true },
+      wednesday: { open: '09:00', close: '20:00', isOpen: true },
+      thursday:  { open: '09:00', close: '20:00', isOpen: true },
+      friday:    { open: '09:00', close: '20:00', isOpen: true },
+      saturday:  { open: '10:00', close: '18:00', isOpen: true },
+      sunday:    { open: '10:00', close: '15:00', isOpen: true }
+    }
+  },
+  {
+    name: 'HealthHub Pharmacy',
+    licenseNumber: 'PH-NY-105',
+    address: { street: '5 Elm Boulevard', city: 'New York', state: 'NY', zipCode: '10003', country: 'USA' },
+    location: { type: 'Point', coordinates: [-74.003, 40.7388] },
+    phone: '+1 (555) 505-6474',
+    email: 'care@healthhub.com',
+    features: ['24/7 Open', 'Home Delivery', 'Compounding'],
+    rating: 4.7,
+    verified: true,
+    deliveryAvailable: true,
+    deliveryRadius: 8,
+    operatingHours: {
+      monday:    { open: '00:00', close: '23:59', isOpen: true },
+      tuesday:   { open: '00:00', close: '23:59', isOpen: true },
+      wednesday: { open: '00:00', close: '23:59', isOpen: true },
+      thursday:  { open: '00:00', close: '23:59', isOpen: true },
+      friday:    { open: '00:00', close: '23:59', isOpen: true },
+      saturday:  { open: '00:00', close: '23:59', isOpen: true },
+      sunday:    { open: '00:00', close: '23:59', isOpen: true }
+    }
+  },
+  // ─── within 5 km ────────────────────────────────────────────────────────────
+  {
+    name: 'PharmaPlus Express',
+    licenseNumber: 'PH-NY-106',
+    address: { street: '110 Cedar Drive', city: 'New York', state: 'NY', zipCode: '10016', country: 'USA' },
+    location: { type: 'Point', coordinates: [-74.016, 40.7438] },
+    phone: '+1 (555) 606-7585',
+    email: 'info@pharmaplusexpress.com',
+    features: ['Drive-Through', 'Digital Rx'],
+    rating: 4.4,
+    verified: true,
+    deliveryAvailable: false,
+    deliveryRadius: 0,
+    operatingHours: {
+      monday:    { open: '08:00', close: '20:00', isOpen: true },
+      tuesday:   { open: '08:00', close: '20:00', isOpen: true },
+      wednesday: { open: '08:00', close: '20:00', isOpen: true },
+      thursday:  { open: '08:00', close: '20:00', isOpen: true },
+      friday:    { open: '08:00', close: '20:00', isOpen: true },
+      saturday:  { open: '09:00', close: '17:00', isOpen: true },
+      sunday:    { open: '00:00', close: '00:00', isOpen: false }
+    }
+  },
+  {
+    name: 'CareMed Pharmacy',
+    licenseNumber: 'PH-NY-107',
+    address: { street: '88 Walnut Street', city: 'New York', state: 'NY', zipCode: '10003', country: 'USA' },
+    location: { type: 'Point', coordinates: [-74.003, 40.6708] },
+    phone: '+1 (555) 707-8696',
+    email: 'support@caremedrx.com',
+    features: ['Insurance Accepted', 'Generic Meds', 'Loyalty Points'],
+    rating: 4.2,
+    verified: true,
+    deliveryAvailable: false,
+    deliveryRadius: 0,
+    operatingHours: {
+      monday:    { open: '09:00', close: '21:00', isOpen: true },
+      tuesday:   { open: '09:00', close: '21:00', isOpen: true },
+      wednesday: { open: '09:00', close: '21:00', isOpen: true },
+      thursday:  { open: '09:00', close: '21:00', isOpen: true },
+      friday:    { open: '09:00', close: '21:00', isOpen: true },
+      saturday:  { open: '10:00', close: '18:00', isOpen: true },
+      sunday:    { open: '11:00', close: '16:00', isOpen: true }
+    }
+  },
+  // ─── within 10 km ───────────────────────────────────────────────────────────
+  {
+    name: 'MedExpress Pharmacy',
+    licenseNumber: 'PH-NY-108',
+    address: { street: '200 Spruce Ave', city: 'New York', state: 'NY', zipCode: '10996', country: 'USA' },
+    location: { type: 'Point', coordinates: [-73.996, 40.7678] },
+    phone: '+1 (555) 808-9707',
+    email: 'info@medexpressrx.com',
+    features: ['24/7 Open', 'Home Delivery', 'Digital Rx', 'Compounding'],
+    rating: 4.6,
+    verified: true,
+    deliveryAvailable: true,
+    deliveryRadius: 15,
+    operatingHours: {
+      monday:    { open: '00:00', close: '23:59', isOpen: true },
+      tuesday:   { open: '00:00', close: '23:59', isOpen: true },
+      wednesday: { open: '00:00', close: '23:59', isOpen: true },
+      thursday:  { open: '00:00', close: '23:59', isOpen: true },
+      friday:    { open: '00:00', close: '23:59', isOpen: true },
+      saturday:  { open: '00:00', close: '23:59', isOpen: true },
+      sunday:    { open: '00:00', close: '23:59', isOpen: true }
+    }
+  },
+  {
+    name: 'AllDay Pharmacy',
+    licenseNumber: 'PH-NY-109',
+    address: { street: '55 Poplar Road', city: 'New York', state: 'NY', zipCode: '10016', country: 'USA' },
+    location: { type: 'Point', coordinates: [-74.016, 40.6388] },
+    phone: '+1 (555) 909-0818',
+    email: 'hello@alldaypharmacy.com',
+    features: ['24/7 Open', 'Insurance Accepted'],
+    rating: 4.1,
+    verified: true,
+    deliveryAvailable: false,
+    deliveryRadius: 0,
+    operatingHours: {
+      monday:    { open: '00:00', close: '23:59', isOpen: true },
+      tuesday:   { open: '00:00', close: '23:59', isOpen: true },
+      wednesday: { open: '00:00', close: '23:59', isOpen: true },
+      thursday:  { open: '00:00', close: '23:59', isOpen: true },
+      friday:    { open: '00:00', close: '23:59', isOpen: true },
+      saturday:  { open: '00:00', close: '23:59', isOpen: true },
+      sunday:    { open: '00:00', close: '23:59', isOpen: true }
+    }
+  },
+  {
+    name: 'Premier Health Rx',
+    licenseNumber: 'PH-NY-110',
+    address: { street: '301 Ash Court', city: 'New York', state: 'NY', zipCode: '10001', country: 'USA' },
+    location: { type: 'Point', coordinates: [-74.001, 40.7978] },
+    phone: '+1 (555) 010-1929',
+    email: 'info@premierhealthrx.com',
+    features: ['Pharmacist Consult', 'Compounding', 'Digital Rx', 'Home Delivery'],
+    rating: 4.9,
+    verified: true,
+    deliveryAvailable: true,
+    deliveryRadius: 12,
+    operatingHours: {
+      monday:    { open: '08:00', close: '22:00', isOpen: true },
+      tuesday:   { open: '08:00', close: '22:00', isOpen: true },
+      wednesday: { open: '08:00', close: '22:00', isOpen: true },
+      thursday:  { open: '08:00', close: '22:00', isOpen: true },
+      friday:    { open: '08:00', close: '22:00', isOpen: true },
+      saturday:  { open: '09:00', close: '20:00', isOpen: true },
+      sunday:    { open: '10:00', close: '18:00', isOpen: true }
+    }
   }
 ];
 
