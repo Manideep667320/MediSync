@@ -1,33 +1,13 @@
-import { ArrowRight, PlayCircle, FileX, MapPinOff, XCircle, Clock, Mic, Scan, Map, Zap, FileCheck, ShieldCheck, Stethoscope, User, Building, Heart, RefreshCw, Sparkles } from 'lucide-react';
+import { ArrowRight, PlayCircle, FileX, MapPinOff, XCircle, Clock, Mic, Scan, Map, Zap, FileCheck, ShieldCheck, Stethoscope, User, Building, Heart, RefreshCw, Sparkles, Smartphone, Hospital, Filter, Bell, CheckCircle2, Cpu, Package, FileText } from 'lucide-react';
 import { useRouter } from '../components/Router';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
+import Background3D from '../components/Background3D';
 
 export default function Landing() {
   const { navigate } = useRouter();
   const heroRef = useRef<HTMLDivElement>(null);
+  const [activeTab, setActiveTab] = useState<'local' | 'hospital'>('local');
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const [scrollY, setScrollY] = useState(0);
-
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      setMousePosition({
-        x: (e.clientX / window.innerWidth - 0.5) * 2,
-        y: (e.clientY / window.innerHeight - 0.5) * 2,
-      });
-    };
-
-    const handleScroll = () => {
-      setScrollY(window.scrollY);
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('scroll', handleScroll);
-
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, []);
 
   return (
     <div className="min-h-screen bg-slate-950 overflow-hidden">
@@ -145,42 +125,116 @@ export default function Landing() {
           perspective: 1000px;
         }
 
-        .blob {
-          border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
-          background: linear-gradient(45deg, rgba(96, 165, 250, 0.3), rgba(167, 139, 250, 0.3));
-          filter: blur(40px);
-          animation: float 20s ease-in-out infinite;
+        @keyframes pulse {
+          0%, 100% {
+            opacity: 0.3;
+            transform: scale(1) translateZ(0);
+          }
+          50% {
+            opacity: 0.8;
+            transform: scale(1.1) translateZ(20px);
+          }
         }
+
+        @keyframes pulse-glow-3d {
+          0% { 
+            box-shadow: 0 0 50px rgba(96, 165, 250, 0.3), 0 0 100px rgba(167, 139, 250, 0.2);
+            transform: translateZ(50px) scale(1);
+          }
+          50% { 
+            box-shadow: 0 0 100px rgba(96, 165, 250, 0.6), 0 0 200px rgba(167, 139, 250, 0.4);
+            transform: translateZ(70px) scale(1.1);
+          }
+          100% { 
+            box-shadow: 0 0 50px rgba(96, 165, 250, 0.3), 0 0 100px rgba(167, 139, 250, 0.2);
+            transform: translateZ(50px) scale(1);
+          }
+        }
+
+        @keyframes float-3d {
+          0%   { transform: translateZ(0px)  rotateX(0deg) rotateY(0deg); }
+          25%  { transform: translateZ(20px) rotateX(2deg) rotateY(2deg); }
+          50%  { transform: translateZ(40px) rotateX(4deg) rotateY(4deg); }
+          75%  { transform: translateZ(20px) rotateX(2deg) rotateY(2deg); }
+          100% { transform: translateZ(0px)  rotateX(0deg) rotateY(0deg); }
+        }
+
+        @keyframes rotate-3d {
+          0%   { transform: rotateX(0deg)   rotateY(0deg)   rotateZ(0deg); }
+          100% { transform: rotateX(360deg) rotateY(360deg) rotateZ(360deg); }
+        }
+
+        .animate-pulse {
+          animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        .animate-pulse-glow-3d {
+          animation: pulse-glow-3d 3s ease-in-out infinite;
+        }
+
+        .animate-float-3d {
+          animation: float-3d 8s ease-in-out infinite;
+          transform-style: preserve-3d;
+        }
+
+        .animate-rotate-3d {
+          animation: rotate-3d 20s linear infinite;
+          transform-style: preserve-3d;
+        }
+
+        .glass-effect-3d {
+          background: rgba(255, 255, 255, 0.03);
+          backdrop-filter: blur(10px);
+          border: 1px solid rgba(255, 255, 255, 0.05);
+          transform-style: preserve-3d;
+          box-shadow: 
+            0 20px 40px rgba(0, 0, 0, 0.4),
+            0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+        }
+
+        .text-gradient-3d {
+          background: linear-gradient(
+            135deg,
+            #60a5fa 0%,
+            #a78bfa 50%,
+            #ec4899 100%
+          );
+          -webkit-background-clip: text;
+          background-clip: text;
+          -webkit-text-fill-color: transparent;
+          filter: drop-shadow(0 0 8px rgba(96, 165, 250, 0.4));
+        }
+
+        .preserve-3d {
+          transform-style: preserve-3d;
+        }
+
+        @keyframes flow-pulse {
+          0% { stroke-opacity: 0.3; stroke-width: 2; }
+          50% { stroke-opacity: 1; stroke-width: 3; }
+          100% { stroke-opacity: 0.3; stroke-width: 2; }
+        }
+
+        .step-card {
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+        }
+
+        .step-card:hover {
+          transform: translateY(-5px) scale(1.02);
+          box-shadow: 0 20px 40px -10px rgba(96, 165, 250, 0.3);
+        }
+
+        .step-badge {
+          background: linear-gradient(135deg, rgba(96, 165, 250, 0.2), rgba(167, 139, 250, 0.2));
+          backdrop-filter: blur(10px);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
       `}</style>
 
-      {/* Animated Background Elements */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div 
-          className="absolute top-1/4 -left-20 w-96 h-96 blob opacity-30"
-          style={{
-            transform: `translate(${mousePosition.x * 30}px, ${mousePosition.y * 30}px)`,
-            transition: 'transform 0.5s ease-out'
-          }}
-        />
-        <div 
-          className="absolute bottom-1/4 -right-20 w-96 h-96 blob opacity-30"
-          style={{
-            transform: `translate(${-mousePosition.x * 30}px, ${-mousePosition.y * 30}px)`,
-            transition: 'transform 0.5s ease-out',
-            animationDelay: '3s'
-          }}
-        />
-        
-        {/* Grid Pattern */}
-        <div 
-          className="absolute inset-0 opacity-[0.03]"
-          style={{
-            backgroundImage: 'linear-gradient(rgba(96, 165, 250, 0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(96, 165, 250, 0.5) 1px, transparent 1px)',
-            backgroundSize: '100px 100px',
-            transform: `translateY(${scrollY * 0.2}px)`,
-          }}
-        />
-      </div>
+      {/* 3D Background */}
+      <Background3D />
 
       {/* Hero Section */}
       <section ref={heroRef} className="relative min-h-screen flex items-center justify-center px-4 py-20">
@@ -261,7 +315,7 @@ export default function Landing() {
       </section>
 
       {/* Problem Section with 3D Cards */}
-      <section className="relative py-32 px-4 bg-gradient-to-b from-slate-950 to-slate-900">
+      <section className="relative py-32 px-4">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-20">
             <h2 className="text-5xl md:text-6xl font-bold mb-6 text-white">
@@ -339,7 +393,7 @@ export default function Landing() {
       </section>
 
       {/* Solution Section with animated features */}
-      <section className="relative py-32 px-4 bg-slate-900">
+      <section className="relative py-32 px-4">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse-slow" />
           <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '2s' }} />
@@ -448,104 +502,512 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* How It Works - 3D Flow Section */}
-      <section className="relative py-32 px-4 bg-gradient-to-b from-slate-900 to-slate-950">
-        <div className="max-w-7xl mx-auto">
-          <h2 className="text-5xl md:text-6xl font-bold text-center mb-20 text-white">
-            Simple for <span className="text-gradient">Everyone</span>
-          </h2>
+      {/* 3D Key Innovation */}
+      <section className="relative py-32 px-4">
+        <div className="max-w-6xl mx-auto perspective-3000">
+          <div
+            className="glass-effect-3d-strong rounded-3xl overflow-hidden preserve-3d transform-gpu hover:translateZ(50px) transition-transform duration-500"
+            style={{ transform: `rotateY(${mousePosition.x * 5}deg) rotateX(${mousePosition.y * 5}deg)` }}
+          >
+            <div className="grid md:grid-cols-2">
+              {/* Left side - Content */}
+              <div className="p-12 relative">
+                <div className="absolute top-0 right-0 w-64 h-64 animate-rotate-3d opacity-10">
+                  <Mic className="w-full h-full text-amber-500" />
+                </div>
 
-          <div className="grid md:grid-cols-3 gap-12">
-            {[
-              {
-                role: 'Doctor',
-                icon: Stethoscope,
-                color: 'from-blue-500 to-cyan-500',
-                steps: [
-                  'Speak or type prescription',
-                  'AI structures into digital format',
-                  'Review and approve',
-                  'Send to preferred pharmacy',
-                  'Track preparation status',
-                ],
-                delay: '0.1s'
-              },
-              {
-                role: 'Patient',
-                icon: User,
-                color: 'from-purple-500 to-pink-500',
-                steps: [
-                  'Receive digital prescription',
-                  'View medicine availability nearby',
-                  'Choose pharmacy by price/distance',
-                  'Get notified when ready',
-                  'Pick up with zero wait',
-                ],
-                delay: '0.2s'
-              },
-              {
-                role: 'Pharmacy',
-                icon: Building,
-                color: 'from-green-500 to-emerald-500',
-                steps: [
-                  'Receive prescription digitally',
-                  'Update stock availability',
-                  'Prepare medicine in advance',
-                  'Notify patient when ready',
-                  'Complete billing seamlessly',
-                ],
-                delay: '0.3s'
-              },
-            ].map((flow, index) => (
-              <div 
-                key={index} 
-                className="group animate-slide-up"
-                style={{ animationDelay: flow.delay }}
-              >
-                <div className="relative glass-effect p-10 rounded-3xl hover:bg-white/10 transition-all duration-500 h-full">
-                  {/* Gradient glow effect */}
-                  <div className={`absolute inset-0 bg-gradient-to-br ${flow.color} opacity-0 group-hover:opacity-20 rounded-3xl blur-2xl transition-opacity duration-500`} />
+                <div className="relative preserve-3d">
+                  <div className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 px-6 py-3 rounded-full text-white font-semibold mb-8 transform-gpu hover:translateZ(20px) transition-transform duration-300">
+                    <Sparkles className="w-5 h-5" />
+                    Key Innovation
+                  </div>
 
-                  <div className="relative">
-                    <div className="flex items-center gap-4 mb-8">
-                      <div className={`w-16 h-16 bg-gradient-to-br ${flow.color} rounded-2xl flex items-center justify-center transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-500`}>
-                        <flow.icon className="w-8 h-8 text-white" />
+                  <h3 className="text-5xl font-bold text-white mb-6 leading-tight">
+                    Voice-to-Text
+                    <br />
+                    <span className="text-gradient-3d">Prescriptions</span>
+                  </h3>
+
+                  <p className="text-xl text-slate-300 mb-8 leading-relaxed">
+                    Doctors speak naturally. AI converts instantly.
+                    <span className="text-gradient-3d block mt-2">No handwriting. No errors. No delays.</span>
+                  </p>
+
+                  {/* 3D Stats */}
+                  <div className="grid grid-cols-2 gap-4">
+                    {[
+                      { value: '10x', label: 'Faster Entry' },
+                      { value: '100%', label: 'Accuracy' },
+                      { value: '50+', label: 'Languages' },
+                      { value: '0', label: 'Handwriting' }
+                    ].map((stat, i) => (
+                      <div key={i} className="glass-effect-3d p-4 rounded-xl text-center transform-gpu hover:translateZ(20px) transition-transform duration-300">
+                        <div className="text-2xl font-bold text-gradient-3d">{stat.value}</div>
+                        <div className="text-sm text-slate-400">{stat.label}</div>
                       </div>
-                      <h3 className="text-3xl font-bold text-white group-hover:text-gradient transition-colors duration-300">
-                        {flow.role}
-                      </h3>
-                    </div>
-
-                    <ol className="space-y-4">
-                      {flow.steps.map((step, stepIndex) => (
-                        <li 
-                          key={stepIndex} 
-                          className="flex gap-4 group/step"
-                          style={{ 
-                            animation: 'slide-up 0.6s ease-out forwards',
-                            animationDelay: `${0.1 * (stepIndex + 1)}s`,
-                            opacity: 0
-                          }}
-                        >
-                          <span className={`flex-shrink-0 w-10 h-10 bg-gradient-to-br ${flow.color} rounded-xl flex items-center justify-center text-sm font-bold text-white shadow-lg group-hover/step:scale-110 transition-transform duration-300`}>
-                            {stepIndex + 1}
-                          </span>
-                          <span className="pt-2 text-slate-300 leading-relaxed group-hover/step:text-white transition-colors duration-300">
-                            {step}
-                          </span>
-                        </li>
-                      ))}
-                    </ol>
+                    ))}
                   </div>
                 </div>
               </div>
+
+              {/* Right side - 3D Visualizer */}
+              <div className="bg-gradient-to-br from-blue-500/20 to-purple-500/20 p-12 flex items-center justify-center min-h-[400px]">
+                <div className="relative preserve-3d animate-float-3d">
+                  {/* 3D Voice Waveform */}
+                  <div className="relative w-64 h-64">
+                    {[...Array(8)].map((_, i) => (
+                      <div
+                        key={i}
+                        className="absolute bottom-0 bg-gradient-to-t from-blue-500 to-purple-500 rounded-full animate-pulse"
+                        style={{
+                          left: `${i * 12}%`,
+                          width: '8%',
+                          height: `${Math.sin(Date.now() * 0.01 + i) * 50 + 50}%`,
+                          opacity: 0.3 + i * 0.1,
+                          transform: `translateZ(${i * 10}px)`,
+                          animation: `pulse 1s ease-in-out infinite`,
+                          animationDelay: `${i * 0.1}s`
+                        }}
+                      />
+                    ))}
+
+                    {/* Central Mic Icon */}
+                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-24 h-24 bg-gradient-to-br from-amber-500 to-orange-500 rounded-3xl flex items-center justify-center animate-pulse-glow-3d" style={{ transform: 'translateZ(50px)' }}>
+                      <Mic className="w-12 h-12 text-white" />
+                    </div>
+                  </div>
+
+                  {/* Floating Text */}
+                  <div className="absolute -bottom-16 left-1/2 transform -translate-x-1/2 glass-effect-3d px-6 py-3 rounded-full whitespace-nowrap" style={{ transform: 'translateZ(30px)' }}>
+                    <span className="text-gradient-3d">"Amoxicillin 500mg twice daily"</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+      {/* Dual-Mode Platform */}
+      <section className="relative py-20 px-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white">
+              One Platform, <span className="text-gradient">Two Powerful Modes</span>
+            </h2>
+            <p className="text-xl text-slate-400">Designed for both independent users and healthcare institutions</p>
+          </div>
+
+          {/* Mode Tabs */}
+          <div className="flex justify-center mb-12">
+            <div className="glass-effect-strong p-1 rounded-2xl inline-flex">
+              <button
+                onClick={() => setActiveTab('local')}
+                className={`px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-300 flex items-center gap-3 ${
+                  activeTab === 'local' 
+                    ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg' 
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <Smartphone className="w-5 h-5" />
+                Local User Mode
+              </button>
+              <button
+                onClick={() => setActiveTab('hospital')}
+                className={`px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-300 flex items-center gap-3 ${
+                  activeTab === 'hospital' 
+                    ? 'bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-lg' 
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <Hospital className="w-5 h-5" />
+                Hospital Portal Mode
+              </button>
+            </div>
+          </div>
+
+          {/* Local Mode Content */}
+          {activeTab === 'local' && (
+            <div className="animate-slide-up">
+              <div className="grid lg:grid-cols-2 gap-12 items-center">
+                <div>
+                  <div className="inline-block px-4 py-2 bg-blue-500/20 rounded-full text-blue-400 font-semibold mb-6">
+                    For Independent Patients
+                  </div>
+                  <h3 className="text-3xl font-bold text-white mb-4">
+                    Complete Prescription Management
+                  </h3>
+                  <p className="text-lg text-slate-400 mb-8">
+                    No hospital connection? No problem. Use MediSync independently to manage all your prescriptions.
+                  </p>
+                  
+                  <div className="space-y-6">
+                    {[
+                      { icon: Scan, text: 'Upload handwritten prescriptions, convert to digital instantly' },
+                      { icon: Map, text: 'Find nearby pharmacies with real-time medicine availability' },
+                      { icon: Filter, text: 'Compare prices and distance across all pharmacies' },
+                      { icon: Bell, text: 'Track order status and get notifications when ready' }
+                    ].map((item, i) => (
+                      <div key={i} className="flex items-start gap-4">
+                        <div className="w-10 h-10 bg-blue-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                          <item.icon className="w-5 h-5 text-blue-400" />
+                        </div>
+                        <div>
+                          <p className="text-white">{item.text}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="relative">
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-3xl blur-3xl opacity-20" />
+                  <div className="relative glass-effect-strong p-8 rounded-3xl border border-blue-500/40 hover:border-blue-500/70 transition-colors duration-300">
+                    <div className="flex items-center gap-4 mb-6 border-b border-slate-700 pb-6">
+                      <Smartphone className="w-8 h-8 text-blue-400" />
+                      <div>
+                        <h4 className="text-white font-bold">Local User Dashboard</h4>
+                        <p className="text-slate-400 text-sm">Everything at your fingertips</p>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-4">
+                      {[
+                        { label: 'Recent Prescription', status: 'Ready for pickup', time: '5 min ago' },
+                        { label: 'Medicine Search', status: '3 pharmacies in stock', time: 'Nearby' },
+                        { label: 'Next Refill', status: 'Amoxicillin, in 5 days', time: 'Reminder' }
+                      ].map((item, i) => (
+                        <div key={i} className="flex items-center justify-between p-4 bg-white/5 rounded-xl">
+                          <div>
+                            <p className="text-white font-medium">{item.label}</p>
+                            <p className="text-sm text-slate-400">{item.status}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-xs text-slate-500">{item.time}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Hospital Mode Content */}
+          {activeTab === 'hospital' && (
+            <div className="animate-slide-up">
+              <div className="grid lg:grid-cols-3 gap-8">
+                {/* Doctor Portal */}
+                <div className="group">
+                  <div className="relative glass-effect-strong p-8 rounded-3xl h-full hover-lift border border-blue-500/40 hover:border-blue-500/70 hover:bg-white/10 transition-all duration-500">
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-cyan-500 opacity-0 group-hover:opacity-20 rounded-3xl blur-2xl transition-opacity duration-500" />
+                    
+                    <div className="relative">
+                      <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center mb-6 transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-500">
+                        <Stethoscope className="w-8 h-8 text-white" />
+                      </div>
+                      
+                      <h3 className="text-2xl font-bold text-white mb-2 group-hover:text-gradient transition-colors duration-300">Doctor Portal</h3>
+                      <p className="text-sm text-blue-400 mb-4">For healthcare providers</p>
+                      
+                      <div className="space-y-4">
+                        {[
+                          'Voice-to-text prescription creation',
+                          'Manual entry with AI assistance',
+                          'Handwritten prescription OCR',
+                          'Patient history & alerts',
+                          'Direct pharmacy routing'
+                        ].map((feature, i) => (
+                          <div key={i} className="flex items-start gap-3">
+                            <CheckCircle2 className="w-4 h-4 text-blue-400 flex-shrink-0 mt-1" />
+                            <span className="text-slate-400 text-sm">{feature}</span>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      <div className="mt-6 pt-6 border-t border-slate-700">
+                        <div className="flex items-center gap-2">
+                          <Mic className="w-4 h-4 text-blue-400" />
+                          <span className="text-sm text-blue-400">Save 10+ minutes per patient</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Pharmacy Portal */}
+                <div className="group">
+                  <div className="relative glass-effect-strong p-8 rounded-3xl h-full hover-lift border border-green-500/40 hover:border-green-500/70 hover:bg-white/10 transition-all duration-500">
+                    <div className="absolute inset-0 bg-gradient-to-br from-green-500 to-emerald-500 opacity-0 group-hover:opacity-20 rounded-3xl blur-2xl transition-opacity duration-500" />
+                    
+                    <div className="relative">
+                      <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center mb-6 transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-500">
+                        <Building className="w-8 h-8 text-white" />
+                      </div>
+                      
+                      <h3 className="text-2xl font-bold text-white mb-2 group-hover:text-gradient transition-colors duration-300">Pharmacy Portal</h3>
+                      <p className="text-sm text-green-400 mb-4">For pharmacy staff</p>
+                      
+                      <div className="space-y-4">
+                        {[
+                          'Instant prescription receipt',
+                          'Real-time inventory sync',
+                          'Automated preparation queue',
+                          'Patient notification system',
+                          'Billing integration'
+                        ].map((feature, i) => (
+                          <div key={i} className="flex items-start gap-3">
+                            <CheckCircle2 className="w-4 h-4 text-green-400 flex-shrink-0 mt-1" />
+                            <span className="text-slate-400 text-sm">{feature}</span>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      <div className="mt-6 pt-6 border-t border-slate-700">
+                        <div className="flex items-center gap-2">
+                          <Zap className="w-4 h-4 text-green-400" />
+                          <span className="text-sm text-green-400">Prepare before patient arrives</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Patient Portal */}
+                <div className="group">
+                  <div className="relative glass-effect-strong p-8 rounded-3xl h-full hover-lift border border-purple-500/40 hover:border-purple-500/70 hover:bg-white/10 transition-all duration-500">
+                    <div className="absolute inset-0 bg-gradient-to-br from-purple-500 to-pink-500 opacity-0 group-hover:opacity-20 rounded-3xl blur-2xl transition-opacity duration-500" />
+                    
+                    <div className="relative">
+                      <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mb-6 transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-500">
+                        <User className="w-8 h-8 text-white" />
+                      </div>
+                      
+                      <h3 className="text-2xl font-bold text-white mb-2 group-hover:text-gradient transition-colors duration-300">Patient Portal</h3>
+                      <p className="text-sm text-purple-400 mb-4">For patients & families</p>
+                      
+                      <div className="space-y-4">
+                        {[
+                          'View digital prescriptions',
+                          'Real-time status tracking',
+                          'Pharmacy location & pricing',
+                          'Refill reminders',
+                          'Family account linking'
+                        ].map((feature, i) => (
+                          <div key={i} className="flex items-start gap-3">
+                            <CheckCircle2 className="w-4 h-4 text-purple-400 flex-shrink-0 mt-1" />
+                            <span className="text-slate-400 text-sm">{feature}</span>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      <div className="mt-6 pt-6 border-t border-slate-700">
+                        <div className="flex items-center gap-2">
+                          <Bell className="w-4 h-4 text-purple-400" />
+                          <span className="text-sm text-purple-400">Never miss an update</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* How It Works - Workflow Diagram */}
+      <section className="relative py-32 px-4">
+        <div className="w-full max-w-6xl mx-auto">
+          {/* Section Title */}
+          <div className="text-center mb-16">
+            <h2 className="text-5xl md:text-6xl font-bold text-white mb-4">
+              How MediSync <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">Works</span>
+            </h2>
+            <p className="text-slate-400 text-lg">From prescription to pickup in 4 simple steps</p>
+          </div>
+
+          {/* Workflow Cards */}
+          <div className="relative flex flex-col lg:flex-row items-start justify-between gap-8">
+
+            {/* Step 1: Doctor */}
+            <div className="relative flex-1 w-full group">
+              <div className="step-card bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-xl rounded-2xl p-6 border border-blue-500/30">
+                <div className="absolute -top-4 -left-2 w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-xl">1</div>
+                <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                  <Stethoscope className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-xl font-bold text-white text-center mb-3">Doctor</h3>
+                <div className="space-y-2">
+                  {[
+                    { icon: Mic, text: 'Voice-to-text prescription', color: 'text-blue-400' },
+                    { icon: Scan, text: 'OCR handwritten scripts', color: 'text-purple-400' },
+                    { icon: FileText, text: 'Digital formatting', color: 'text-green-400' },
+                  ].map((item, i) => (
+                    <div key={i} className="flex items-center gap-2 text-sm text-slate-300 bg-white/5 p-2 rounded-lg">
+                      <item.icon className={`w-4 h-4 ${item.color}`} />
+                      <span>{item.text}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-4 flex items-center justify-center gap-1 text-xs text-slate-400">
+                  <Clock className="w-3 h-3" /><span>30 seconds</span>
+                </div>
+              </div>
+              <div className="hidden lg:flex absolute -right-4 top-1/2 -translate-y-1/2 z-10">
+                <ArrowRight className="w-6 h-6 text-blue-400 animate-pulse" />
+              </div>
+            </div>
+
+            {/* Step 2: AI Engine */}
+            <div className="relative flex-1 w-full group">
+              <div className="step-card bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-xl rounded-2xl p-6 border border-purple-500/30">
+                <div className="absolute -top-4 -left-2 w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-xl">2</div>
+                <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                  <Cpu className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-xl font-bold text-white text-center mb-3">AI Engine</h3>
+                <div className="space-y-2">
+                  {[
+                    { icon: Sparkles, text: 'Real-time processing', color: 'text-yellow-400' },
+                    { icon: CheckCircle2, text: 'Dosage validation', color: 'text-green-400' },
+                    { icon: Zap, text: 'Instant structuring', color: 'text-purple-400' },
+                  ].map((item, i) => (
+                    <div key={i} className="flex items-center gap-2 text-sm text-slate-300 bg-white/5 p-2 rounded-lg">
+                      <item.icon className={`w-4 h-4 ${item.color}`} />
+                      <span>{item.text}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-4 flex items-center justify-center gap-1 text-xs text-slate-400">
+                  <Clock className="w-3 h-3" /><span>2 seconds</span>
+                </div>
+              </div>
+              <div className="hidden lg:flex absolute -right-4 top-1/2 -translate-y-1/2 z-10">
+                <ArrowRight className="w-6 h-6 text-purple-400 animate-pulse" />
+              </div>
+            </div>
+
+            {/* Step 3: Pharmacy */}
+            <div className="relative flex-1 w-full group">
+              <div className="step-card bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-xl rounded-2xl p-6 border border-green-500/30">
+                <div className="absolute -top-4 -left-2 w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-xl">3</div>
+                <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                  <Building className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-xl font-bold text-white text-center mb-3">Pharmacy</h3>
+                <div className="space-y-2">
+                  {[
+                    { icon: Package, text: 'Instant receipt', color: 'text-green-400' },
+                    { icon: Map, text: 'Inventory check', color: 'text-blue-400' },
+                    { icon: Bell, text: 'Prep notification', color: 'text-yellow-400' },
+                  ].map((item, i) => (
+                    <div key={i} className="flex items-center gap-2 text-sm text-slate-300 bg-white/5 p-2 rounded-lg">
+                      <item.icon className={`w-4 h-4 ${item.color}`} />
+                      <span>{item.text}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-4 flex items-center justify-center gap-1 text-xs text-slate-400">
+                  <Clock className="w-3 h-3" /><span>Prepped before arrival</span>
+                </div>
+              </div>
+              <div className="hidden lg:flex absolute -right-4 top-1/2 -translate-y-1/2 z-10">
+                <ArrowRight className="w-6 h-6 text-green-400 animate-pulse" />
+              </div>
+            </div>
+
+            {/* Step 4: Patient */}
+            <div className="relative flex-1 w-full group">
+              <div className="step-card bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-xl rounded-2xl p-6 border border-orange-500/30">
+                <div className="absolute -top-4 -left-2 w-10 h-10 bg-gradient-to-r from-orange-500 to-red-600 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-xl">4</div>
+                <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl flex items-center justify-center transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                  <User className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-xl font-bold text-white text-center mb-3">Patient</h3>
+                <div className="space-y-2">
+                  {[
+                    { icon: Bell, text: 'Ready notification', color: 'text-orange-400' },
+                    { icon: FileText, text: 'Digital prescription', color: 'text-blue-400' },
+                    { icon: CheckCircle2, text: 'Zero wait pickup', color: 'text-green-400' },
+                  ].map((item, i) => (
+                    <div key={i} className="flex items-center gap-2 text-sm text-slate-300 bg-white/5 p-2 rounded-lg">
+                      <item.icon className={`w-4 h-4 ${item.color}`} />
+                      <span>{item.text}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-4 flex items-center justify-center gap-1 text-xs text-slate-400">
+                  <Clock className="w-3 h-3" /><span>Ready immediately</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Connecting SVG line (desktop) */}
+          <svg className="absolute top-1/2 left-0 w-full h-32 pointer-events-none hidden lg:block" style={{ transform: 'translateY(-50%)' }}>
+            <defs>
+              <linearGradient id="wf-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#60a5fa" />
+                <stop offset="50%" stopColor="#a78bfa" />
+                <stop offset="100%" stopColor="#ec4899" />
+              </linearGradient>
+              <filter id="wf-glow">
+                <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+                <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+            </defs>
+            <path d="M 15% 50% L 85% 50%" stroke="url(#wf-gradient)" strokeWidth="2" strokeDasharray="8 8" filter="url(#wf-glow)" className="animate-pulse" />
+            <circle cx="25%" cy="50%" r="4" fill="#60a5fa" filter="url(#wf-glow)">
+              <animate attributeName="cx" values="15%;85%;15%" dur="8s" repeatCount="indefinite" />
+            </circle>
+          </svg>
+
+          {/* Bottom Stats */}
+          <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              { label: 'Total Time', value: '< 5 min', icon: Clock, color: 'text-blue-400' },
+              { label: 'Accuracy', value: '99.9%', icon: CheckCircle2, color: 'text-green-400' },
+              { label: 'Steps', value: '4', icon: Cpu, color: 'text-purple-400' },
+              { label: 'Wait Time', value: '0 min', icon: Zap, color: 'text-orange-400' },
+            ].map((stat, i) => (
+              <div key={i} className="step-badge rounded-xl p-4 text-center">
+                <stat.icon className={`w-5 h-5 ${stat.color} mx-auto mb-2`} />
+                <div className="text-xl font-bold text-white">{stat.value}</div>
+                <div className="text-xs text-slate-400">{stat.label}</div>
+              </div>
             ))}
+          </div>
+
+          {/* Mobile Timeline */}
+          <div className="mt-8 lg:hidden">
+            <div className="relative">
+              <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gradient-to-b from-blue-500 via-purple-500 to-orange-500" />
+              {[
+                { step: 1, title: 'Doctor creates prescription', time: '30s', color: 'from-blue-500 to-blue-600' },
+                { step: 2, title: 'AI processes & validates', time: '2s', color: 'from-purple-500 to-purple-600' },
+                { step: 3, title: 'Pharmacy prepares medicine', time: 'Before arrival', color: 'from-green-500 to-green-600' },
+                { step: 4, title: 'Patient picks up', time: 'Zero wait', color: 'from-orange-500 to-orange-600' },
+              ].map((item, i) => (
+                <div key={i} className="relative flex items-start gap-4 mb-6 pl-8">
+                  <div className={`absolute left-0 w-8 h-8 bg-gradient-to-r ${item.color} rounded-xl flex items-center justify-center text-white font-bold text-sm`}>
+                    {item.step}
+                  </div>
+                  <div className="flex-1 glass-effect-3d p-3 rounded-lg">
+                    <p className="text-white font-medium">{item.title}</p>
+                    <p className="text-xs text-slate-400 mt-1">{item.time}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
       {/* Impact Metrics with 3D cards */}
-      <section className="relative py-32 px-4 bg-slate-900">
+      <section className="relative py-32 px-4">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-5xl md:text-6xl font-bold text-center mb-20 text-white">
             Real Results, <span className="text-gradient">Real Impact</span>
@@ -592,7 +1054,7 @@ export default function Landing() {
       </section>
 
       {/* Final CTA Section */}
-      <section className="relative py-32 px-4 bg-gradient-to-b from-slate-950 via-blue-950 to-purple-950 overflow-hidden">
+      <section className="relative py-32 px-4 overflow-hidden">
         {/* Animated background elements */}
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl animate-pulse-slow" />
