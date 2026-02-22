@@ -14,8 +14,8 @@ router.post(
   localController.uploadPrescription
 );
 
-// Find nearby pharmacies - requires authentication
-router.post('/pharmacies/nearby', authenticate, localController.findNearbyPharmacies);
+// Find nearby pharmacies - public endpoint (no auth required)
+router.post('/pharmacies/nearby', localController.findNearbyPharmacies);
 
 // Save prescription (for local users) - requires authentication
 router.post('/prescriptions', authenticate, localController.savePrescription);

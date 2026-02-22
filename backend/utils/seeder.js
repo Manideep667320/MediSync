@@ -428,12 +428,22 @@ const seedDatabase = async () => {
     });
     console.log('✅ Created demo admin: admin@demo.com / admin123');
 
+    // Demo Local User
+    await User.create({
+      email: 'local@demo.com',
+      password: 'demo123',
+      role: 'local',
+      phone: '+1-212-555-5000'
+    });
+    console.log('✅ Created demo local user: local@demo.com / demo123');
+
     console.log('\n🎉 Database seeding completed successfully!');
     console.log('\n📝 Demo Credentials:');
     console.log('   Doctor:   doctor@demo.com   / demo123');
     console.log('   Patient:  patient@demo.com  / demo123');
     console.log('   Pharmacy: pharmacy@demo.com / demo123');
     console.log('   Admin:    admin@demo.com    / admin123');
+    console.log('   Local:    local@demo.com    / demo123');
     
     process.exit(0);
   } catch (error) {
