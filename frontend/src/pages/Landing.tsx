@@ -947,7 +947,7 @@ export default function Landing() {
           </div>
 
           {/* Connecting SVG line (desktop) */}
-          <svg className="absolute top-1/2 left-0 w-full h-32 pointer-events-none hidden lg:block" style={{ transform: 'translateY(-50%)' }}>
+          <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute top-1/2 left-0 w-full h-32 pointer-events-none hidden lg:block" style={{ transform: 'translateY(-50%)' }}>
             <defs>
               <linearGradient id="wf-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
                 <stop offset="0%" stopColor="#60a5fa" />
@@ -959,9 +959,9 @@ export default function Landing() {
                 <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
               </filter>
             </defs>
-            <path d="M 15% 50% L 85% 50%" stroke="url(#wf-gradient)" strokeWidth="2" strokeDasharray="8 8" filter="url(#wf-glow)" className="animate-pulse" />
-            <circle cx="25%" cy="50%" r="4" fill="#60a5fa" filter="url(#wf-glow)">
-              <animate attributeName="cx" values="15%;85%;15%" dur="8s" repeatCount="indefinite" />
+            <path d="M 15 50 L 85 50" stroke="url(#wf-gradient)" strokeWidth="0.5" strokeDasharray="3 3" filter="url(#wf-glow)" className="animate-pulse" />
+            <circle cx="25" cy="50" r="1.5" fill="#60a5fa" filter="url(#wf-glow)">
+              <animate attributeName="cx" values="15;85;15" dur="8s" repeatCount="indefinite" />
             </circle>
           </svg>
 
