@@ -1,7 +1,7 @@
 {
-  "buildCommand": "cd frontend && npm ci && npx vite build",
+  "buildCommand": "cd frontend && npm install --include=dev && npx vite build",
   "outputDirectory": "frontend/dist",
-  "installCommand": "npm ci --prefix backend",
+  "installCommand": "npm install --prefix backend",
   "framework": null,
   "rewrites": [
     {
