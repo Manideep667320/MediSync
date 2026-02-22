@@ -37,7 +37,11 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md' }:
             <X className="w-6 h-6 text-gray-600" />
           </button>
         </div>
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-88px)]">{children}</div>
+        <div
+          className="p-6 overflow-y-auto max-h-[calc(90vh-88px)] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+        >
+          {children}
+        </div>
       </div>
     </div>
   );

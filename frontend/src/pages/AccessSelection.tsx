@@ -1,8 +1,12 @@
+import { useState } from 'react';
 import { User, Building, ArrowLeft } from 'lucide-react';
 import { useRouter } from '../components/Router';
+import Modal from '../components/Modal';
+import LocalAuthForm from '../components/LocalAuthForm';
 
 export default function AccessSelection() {
   const { navigate } = useRouter();
+  const [isLocalAuthOpen, setIsLocalAuthOpen] = useState(false);
 
   const options = [
     {
@@ -18,7 +22,7 @@ export default function AccessSelection() {
         'No hospital affiliation needed',
       ],
       buttonText: 'Login / Register',
-      action: () => navigate('/local-auth'),
+      action: () => setIsLocalAuthOpen(true),
       badge: 'Login Required',
       badgeColor: 'bg-green-100 text-green-700',
     },
@@ -103,6 +107,15 @@ export default function AccessSelection() {
           ))}
         </div>
       </div>
+
+      <Modal
+        isOpen={isLocalAuthOpen}
+        onClose={() => setIsLocalAuthOpen(false)}
+        title="Local User Login / Registration"
+        size="sm"
+      >
+        <LocalAuthForm onClose={() => setIsLocalAuthOpen(false)} />
+      </Modal>
     </div>
   );
 }
