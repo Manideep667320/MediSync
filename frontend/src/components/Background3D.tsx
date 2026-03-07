@@ -13,7 +13,7 @@ export const Background3D = () => {
       newParticles.push({
         x: Math.random() * 100,
         y: Math.random() * 100,
-        size: Math.random() * 3 + 1,
+        size: Math.random() * 20 + 15,
         speed: Math.random() * 0.5 + 0.1,
       });
     }
@@ -64,8 +64,8 @@ export const Background3D = () => {
 
         .bg3d-grid {
           background-image:
-            linear-gradient(rgba(96, 165, 250, 0.1) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(96, 165, 250, 0.1) 1px, transparent 1px);
+            linear-gradient(rgba(80, 137, 145, 0.3) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(80, 137, 145, 0.3) 1px, transparent 1px);
           background-size: 50px 50px;
           transform: rotateX(60deg) translateZ(-100px);
           transform-style: preserve-3d;
@@ -75,14 +75,14 @@ export const Background3D = () => {
         {particles.map((particle, i) => (
           <div
             key={i}
-            className="absolute rounded-full bg-white"
+            className="absolute rounded-full bg-brand-900"
             style={{
               left: `${particle.x}%`,
               top: `${particle.y}%`,
               width: `${particle.size}px`,
               height: `${particle.size}px`,
-              opacity: 0.3,
-              boxShadow: '0 0 10px rgba(255, 255, 255, 0.5)',
+              opacity: 0.4,
+              boxShadow: '0 0 10px rgba(13, 27, 42, 0.5)',
               transition: 'top 0.05s linear',
             }}
           />
@@ -94,15 +94,6 @@ export const Background3D = () => {
         className="fixed inset-0 pointer-events-none overflow-hidden"
         style={{ perspective: '3000px' }}
       >
-        {/* Floating sphere */}
-        <div
-          className="absolute top-40 right-20 w-96 h-96 bg3d-float"
-          style={{
-            transform: `translateZ(${scrollY * 0.2}px) translateX(${mousePosition.x * 50}px) translateY(${mousePosition.y * 50}px)`,
-          }}
-        >
-          <div className="w-full h-full rounded-full bg-gradient-to-br from-purple-500/20 to-pink-500/20 blur-3xl" />
-        </div>
 
         {/* 3D grid floor */}
         <div

@@ -72,29 +72,29 @@ export default function LocalAuthForm({ onClose }: LocalAuthFormProps) {
   return (
     <>
       <div className="flex items-center justify-center mb-6">
-        <div className="w-16 h-16 bg-green-600 rounded-2xl flex items-center justify-center shadow-lg">
+        <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
           <Upload className="w-8 h-8 text-white" />
         </div>
       </div>
 
-      <h2 className="text-3xl font-bold text-center text-gray-900 mb-2">
+      <h2 className="text-3xl font-bold text-center text-white mb-2 font-display">
         {isLogin ? 'Welcome Back' : 'Create Account'}
       </h2>
-      <p className="text-center text-gray-600 mb-8">
+      <p className="text-center text-slate-400 mb-8">
         {isLogin ? 'Sign in as Local User' : 'Register as Local User'}
       </p>
 
       {error && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-          <p className="text-sm text-red-800">{error}</p>
+        <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-xl flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+          <p className="text-sm text-red-300">{error}</p>
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-5">
         {!isLogin && (
           <div>
-            <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="fullName" className="block text-sm font-semibold text-slate-300 mb-2">
               Full Name
             </label>
             <input
@@ -104,14 +104,14 @@ export default function LocalAuthForm({ onClose }: LocalAuthFormProps) {
               value={formData.fullName}
               onChange={handleInputChange}
               required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition"
+              className="w-full px-4 py-3 glass-input"
               placeholder="John Doe"
             />
           </div>
         )}
 
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="email" className="block text-sm font-semibold text-slate-300 mb-2">
             Email Address
           </label>
           <input
@@ -121,14 +121,14 @@ export default function LocalAuthForm({ onClose }: LocalAuthFormProps) {
             value={formData.email}
             onChange={handleInputChange}
             required
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition"
+            className="w-full px-4 py-3 glass-input"
             placeholder="you@example.com"
           />
         </div>
 
         {!isLogin && (
           <div>
-            <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="phone" className="block text-sm font-semibold text-slate-300 mb-2">
               Phone Number
             </label>
             <input
@@ -138,14 +138,14 @@ export default function LocalAuthForm({ onClose }: LocalAuthFormProps) {
               value={formData.phone}
               onChange={handleInputChange}
               required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition"
+              className="w-full px-4 py-3 glass-input"
               placeholder="+91 98765 43210"
             />
           </div>
         )}
 
         <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="password" className="block text-sm font-semibold text-slate-300 mb-2">
             Password
           </label>
           <input
@@ -155,14 +155,14 @@ export default function LocalAuthForm({ onClose }: LocalAuthFormProps) {
             value={formData.password}
             onChange={handleInputChange}
             required
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition"
+            className="w-full px-4 py-3 glass-input"
             placeholder="••••••••"
           />
         </div>
 
         {!isLogin && (
           <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="confirmPassword" className="block text-sm font-semibold text-slate-300 mb-2">
               Confirm Password
             </label>
             <input
@@ -172,7 +172,7 @@ export default function LocalAuthForm({ onClose }: LocalAuthFormProps) {
               value={formData.confirmPassword}
               onChange={handleInputChange}
               required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition"
+              className="w-full px-4 py-3 glass-input"
               placeholder="••••••••"
             />
           </div>
@@ -181,16 +181,18 @@ export default function LocalAuthForm({ onClose }: LocalAuthFormProps) {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full btn-gradient py-3 rounded-xl font-semibold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {loading ? (
-            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-          ) : (
-            <>
-              {isLogin ? <LogIn className="w-5 h-5" /> : <UserPlus className="w-5 h-5" />}
-              {isLogin ? 'Sign In' : 'Create Account'}
-            </>
-          )}
+          <span className="relative z-10 flex items-center gap-2">
+            {loading ? (
+              <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+            ) : (
+              <>
+                {isLogin ? <LogIn className="w-5 h-5" /> : <UserPlus className="w-5 h-5" />}
+                {isLogin ? 'Sign In' : 'Create Account'}
+              </>
+            )}
+          </span>
         </button>
       </form>
 
@@ -207,19 +209,19 @@ export default function LocalAuthForm({ onClose }: LocalAuthFormProps) {
               fullName: ''
             });
           }}
-          className="text-green-600 hover:text-green-700 font-medium transition-colors"
+          className="text-blue-400 hover:text-blue-300 font-medium transition-colors"
         >
           {isLogin ? "Don't have an account? Sign Up" : 'Already have an account? Sign In'}
         </button>
       </div>
 
-      <div className="mt-8 pt-6 border-t border-gray-200">
-        <div className="bg-green-50 rounded-lg p-4">
-          <h3 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
-            <User className="w-4 h-4 text-green-600" />
+      <div className="mt-8 pt-6 border-t border-white/10">
+        <div className="bg-blue-500/10 rounded-xl p-4 border border-blue-500/20">
+          <h3 className="font-semibold text-white mb-2 flex items-center gap-2">
+            <User className="w-4 h-4 text-blue-400" />
             Local User Benefits:
           </h3>
-          <ul className="text-sm text-gray-600 space-y-1">
+          <ul className="text-sm text-slate-400 space-y-1">
             <li>• Upload physical prescriptions</li>
             <li>• Find nearby pharmacies</li>
             <li>• Check medicine availability</li>
@@ -229,7 +231,7 @@ export default function LocalAuthForm({ onClose }: LocalAuthFormProps) {
       </div>
 
       <div className="mt-6 text-center">
-        <button onClick={close} className="text-sm text-gray-600 hover:text-gray-800 transition-colors">
+        <button onClick={close} className="text-sm text-slate-500 hover:text-slate-300 transition-colors">
           Close
         </button>
       </div>

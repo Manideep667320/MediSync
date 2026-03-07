@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { User, Building, ArrowLeft } from 'lucide-react';
+import { User, Building, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { useRouter } from '../components/Router';
 import Modal from '../components/Modal';
 import LocalAuthForm from '../components/LocalAuthForm';
@@ -24,7 +24,9 @@ export default function AccessSelection() {
       buttonText: 'Login / Register',
       action: () => setIsLocalAuthOpen(true),
       badge: 'Login Required',
-      badgeColor: 'bg-green-100 text-green-700',
+      badgeColor: 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30',
+      gradient: 'from-blue-500 to-cyan-500',
+      glowColor: 'hover:border-blue-500/50 hover:shadow-glow-blue',
     },
     {
       id: 'hospital_portal',
@@ -41,33 +43,42 @@ export default function AccessSelection() {
       buttonText: 'Login via Hospital Portal',
       action: () => navigate('/hospital'),
       badge: 'Login Required',
-      badgeColor: 'bg-blue-100 text-blue-700',
+      badgeColor: 'bg-purple-500/20 text-purple-400 border border-purple-500/30',
+      gradient: 'from-purple-500 to-pink-500',
+      glowColor: 'hover:border-purple-500/50 hover:shadow-glow-purple',
     },
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-slate-950 relative overflow-hidden">
+      {/* Background decoration */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-40 left-10 w-96 h-96 bg-blue-500/8 rounded-full blur-3xl animate-glow-pulse" />
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-purple-500/8 rounded-full blur-3xl animate-glow-pulse" style={{ animationDelay: '2s' }} />
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
         <button
           onClick={() => navigate('/')}
-          className="flex items-center gap-2 text-gray-600 hover:text-blue-600 mb-6 transition-colors"
+          className="flex items-center gap-2 text-slate-400 hover:text-blue-400 mb-6 transition-colors"
         >
           <ArrowLeft className="w-5 h-5" />
           Back to Home
         </button>
 
         <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4 text-gray-900">
-            How Would You Like to Access MediSync?
+          <h1 className="text-4xl md:text-5xl font-bold mb-4 font-display">
+            <span className="text-white">How Would You Like to </span>
+            <span className="text-gradient">Access MediSync?</span>
           </h1>
-          <p className="text-lg text-gray-600">Choose your access method based on your needs</p>
+          <p className="text-lg text-slate-400">Choose your access method based on your needs</p>
         </div>
 
         <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
           {options.map((option) => (
             <div
               key={option.id}
-              className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all p-8 border-2 border-gray-100 hover:border-blue-300 relative flex flex-col"
+              className={`glass-card glass-card-hover p-8 relative flex flex-col transition-all duration-500 ${option.glowColor}`}
             >
               <div className="absolute top-6 right-6">
                 <span className={`px-3 py-1 rounded-full text-xs font-semibold ${option.badgeColor}`}>
@@ -76,22 +87,20 @@ export default function AccessSelection() {
               </div>
 
               <div className="mb-6">
-                <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mb-4">
-                  <option.icon className="w-8 h-8 text-blue-600" />
+                <div className={`w-16 h-16 bg-gradient-to-br ${option.gradient} rounded-2xl flex items-center justify-center mb-4 transform hover:scale-110 hover:rotate-6 transition-all duration-500`}>
+                  <option.icon className="w-8 h-8 text-white" />
                 </div>
-                <h2 className="text-3xl font-bold mb-4 text-gray-900">{option.title}</h2>
-                <p className="text-gray-600 leading-relaxed">{option.description}</p>
+                <h2 className="text-3xl font-bold mb-4 text-white font-display">{option.title}</h2>
+                <p className="text-slate-400 leading-relaxed">{option.description}</p>
               </div>
 
               <div className="mb-8 flex-grow">
-                <h3 className="font-semibold text-gray-900 mb-3">Features:</h3>
-                <ul className="space-y-2">
+                <h3 className="font-semibold text-slate-300 mb-3">Features:</h3>
+                <ul className="space-y-3">
                   {option.features.map((feature, index) => (
-                    <li key={index} className="flex items-start gap-2">
-                      <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <div className="w-2 h-2 rounded-full bg-blue-600"></div>
-                      </div>
-                      <span className="text-gray-700">{feature}</span>
+                    <li key={index} className="flex items-start gap-3">
+                      <CheckCircle2 className={`w-5 h-5 flex-shrink-0 mt-0.5 bg-gradient-to-r ${option.gradient} bg-clip-text text-blue-400`} />
+                      <span className="text-slate-300">{feature}</span>
                     </li>
                   ))}
                 </ul>
@@ -99,9 +108,9 @@ export default function AccessSelection() {
 
               <button
                 onClick={option.action}
-                className="w-full bg-blue-600 text-white py-4 rounded-lg font-semibold text-lg hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg"
+                className="w-full btn-gradient py-4 rounded-xl font-semibold text-lg"
               >
-                {option.buttonText}
+                <span className="relative z-10">{option.buttonText}</span>
               </button>
             </div>
           ))}

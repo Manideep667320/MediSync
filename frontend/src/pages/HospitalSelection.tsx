@@ -51,54 +51,63 @@ export default function HospitalSelection() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-slate-950 relative overflow-hidden">
+      {/* Background decoration */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 right-20 w-96 h-96 bg-blue-500/8 rounded-full blur-3xl animate-glow-pulse" />
+        <div className="absolute bottom-40 left-20 w-72 h-72 bg-purple-500/8 rounded-full blur-3xl animate-glow-pulse" style={{ animationDelay: '2s' }} />
+      </div>
+
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
         <button
           onClick={() => navigate('/access')}
-          className="flex items-center gap-2 text-gray-600 hover:text-blue-600 mb-6 transition-colors"
+          className="flex items-center gap-2 text-slate-400 hover:text-blue-400 mb-6 transition-colors"
         >
           <ArrowLeft className="w-5 h-5" />
           Back
         </button>
 
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-4 text-gray-900">Select Your Hospital</h1>
-          <p className="text-lg text-gray-600">Choose the hospital you're affiliated with</p>
+          <h1 className="text-4xl font-bold mb-4 font-display">
+            <span className="text-white">Select Your </span>
+            <span className="text-gradient">Hospital</span>
+          </h1>
+          <p className="text-lg text-slate-400">Choose the hospital you're affiliated with</p>
         </div>
 
         <div className="mb-8">
           <div className="relative max-w-2xl mx-auto">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-500" />
             <input
               type="text"
               placeholder="Search by hospital name, city, or state..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-4 bg-white border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none text-lg"
+              className="w-full pl-12 pr-4 py-4 glass-input rounded-2xl text-lg"
             />
           </div>
         </div>
 
         {loading ? (
           <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading hospitals...</p>
+            <div className="w-12 h-12 border-2 border-blue-500/30 border-t-blue-400 rounded-full animate-spin mx-auto"></div>
+            <p className="mt-4 text-slate-400">Loading hospitals...</p>
           </div>
         ) : error ? (
           <div className="text-center py-12">
-            <Building className="w-16 h-16 text-red-300 mx-auto mb-4" />
-            <p className="text-red-600 mb-4">{error}</p>
+            <Building className="w-16 h-16 text-red-400/50 mx-auto mb-4" />
+            <p className="text-red-400 mb-4">{error}</p>
             <button
               onClick={fetchHospitals}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="px-6 py-2 btn-gradient rounded-xl"
             >
-              Try Again
+              <span className="relative z-10">Try Again</span>
             </button>
           </div>
         ) : filteredHospitals.length === 0 ? (
           <div className="text-center py-12">
-            <Building className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-600">No hospitals found matching your search.</p>
+            <Building className="w-16 h-16 text-slate-600 mx-auto mb-4" />
+            <p className="text-slate-400">No hospitals found matching your search.</p>
           </div>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -106,29 +115,29 @@ export default function HospitalSelection() {
               <div
                 key={hospital._id}
                 onClick={() => selectHospital(hospital._id)}
-                className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all p-6 cursor-pointer border-2 border-gray-100 hover:border-blue-300 group"
+                className="glass-card glass-card-hover p-6 cursor-pointer group transition-all duration-500"
               >
                 <div className="flex items-start justify-between mb-4">
-                  <div className="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center group-hover:bg-blue-200 transition-colors">
-                    <Building className="w-7 h-7 text-blue-600" />
+                  <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-6 transition-all duration-500">
+                    <Building className="w-7 h-7 text-white" />
                   </div>
                   {hospital.verified && (
-                    <div className="flex items-center gap-1 bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-semibold">
+                    <div className="flex items-center gap-1 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-1 rounded-full text-xs font-semibold">
                       <CheckCircle className="w-3 h-3" />
                       Verified
                     </div>
                   )}
                 </div>
 
-                <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
+                <h3 className="text-lg font-bold text-white mb-2 group-hover:text-gradient transition-colors font-display">
                   {hospital.name}
                 </h3>
 
-                <div className="flex items-start gap-2 text-gray-600 text-sm">
-                  <MapPin className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                <div className="flex items-start gap-2 text-slate-400 text-sm">
+                  <MapPin className="w-4 h-4 flex-shrink-0 mt-0.5 text-slate-500" />
                   <div>
                     <div>{hospital.address.street}</div>
-                    <div className="text-gray-500">
+                    <div className="text-slate-500">
                       {hospital.address.city}, {hospital.address.state} {hospital.address.zipCode}
                     </div>
                   </div>

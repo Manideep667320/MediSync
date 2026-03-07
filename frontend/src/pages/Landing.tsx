@@ -1,7 +1,9 @@
-import { ArrowRight, PlayCircle, FileX, MapPinOff, XCircle, Clock, Mic, Scan, Map, Zap, FileCheck, ShieldCheck, Stethoscope, User, Building, Heart, RefreshCw, Sparkles, Smartphone, Hospital, Filter, Bell, CheckCircle2, Cpu, Package, FileText } from 'lucide-react';
+import { ArrowRight, PlayCircle, FileX, MapPinOff, XCircle, Clock, Mic, Scan, Map, Zap, FileCheck, ShieldCheck, Stethoscope, User, Building, Heart, RefreshCw, Sparkles, Smartphone, Hospital, Filter, Bell, CheckCircle2, Cpu, Package, FileText, FileScan, MapPin, Scale, BellRing } from 'lucide-react';
 import { useRouter } from '../components/Router';
-import { useRef, useState } from 'react';
+import { useRef, useState, useCallback } from 'react';
 import Background3D from '../components/Background3D';
+import { useScrollReveal, useStaggerReveal } from '../hooks/useScrollReveal';
+import { useCountUp } from '../hooks/useCountUp';
 
 export default function Landing() {
   const { navigate } = useRouter();
@@ -9,8 +11,33 @@ export default function Landing() {
   const [activeTab, setActiveTab] = useState<'local' | 'hospital'>('local');
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
+  // Scroll reveal hooks for each section
+  const problemReveal = useStaggerReveal();
+  const solutionReveal = useStaggerReveal();
+  const innovationReveal = useScrollReveal();
+  const dualModeReveal = useScrollReveal();
+  const workflowReveal = useStaggerReveal({ threshold: 0.05 });
+  const impactReveal = useStaggerReveal();
+  const ctaReveal = useScrollReveal();
+
+  // Count-up hooks for impact metrics
+  const count1 = useCountUp(95);
+  const count2 = useCountUp(80);
+  const count3 = useCountUp(3);
+  const count4 = useCountUp(60);
+  const count5 = useCountUp(100);
+  const countups = [count1, count2, count3, count4, count5];
+
+  // Hero parallax mouse handler
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width - 0.5) * 2;
+    const y = ((e.clientY - rect.top) / rect.height - 0.5) * 2;
+    setMousePosition({ x, y });
+  }, []);
+
   return (
-    <div className="min-h-screen bg-slate-950 overflow-hidden">
+    <div className="min-h-screen bg-white overflow-hidden">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=DM+Sans:wght@400;500;700&display=swap');
         
@@ -110,15 +137,9 @@ export default function Landing() {
           border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        .text-gradient {
-          background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 50%, #ec4899 100%);
-          -webkit-background-clip: text;
-          background-clip: text;
-          -webkit-text-fill-color: transparent;
-        }
 
         .glow {
-          box-shadow: 0 0 40px rgba(96, 165, 250, 0.4);
+          box-shadow: 0 0 40px rgba(133, 79, 108, 0.4); /* brand-500 */
         }
 
         .perspective-1000 {
@@ -138,15 +159,15 @@ export default function Landing() {
 
         @keyframes pulse-glow-3d {
           0% { 
-            box-shadow: 0 0 50px rgba(96, 165, 250, 0.3), 0 0 100px rgba(167, 139, 250, 0.2);
+            box-shadow: 0 0 50px rgba(116, 179, 206, 0.3), 0 0 100px rgba(80, 137, 145, 0.2);
             transform: translateZ(50px) scale(1);
           }
           50% { 
-            box-shadow: 0 0 100px rgba(96, 165, 250, 0.6), 0 0 200px rgba(167, 139, 250, 0.4);
+            box-shadow: 0 0 100px rgba(116, 179, 206, 0.6), 0 0 200px rgba(80, 137, 145, 0.4);
             transform: translateZ(70px) scale(1.1);
           }
           100% { 
-            box-shadow: 0 0 50px rgba(96, 165, 250, 0.3), 0 0 100px rgba(167, 139, 250, 0.2);
+            box-shadow: 0 0 50px rgba(116, 179, 206, 0.3), 0 0 100px rgba(80, 137, 145, 0.2);
             transform: translateZ(50px) scale(1);
           }
         }
@@ -195,14 +216,14 @@ export default function Landing() {
         .text-gradient-3d {
           background: linear-gradient(
             135deg,
-            #60a5fa 0%,
-            #a78bfa 50%,
-            #ec4899 100%
+            #D6F3F4 0%,
+            #74B3CE 50%,
+            #508991 100%
           );
           -webkit-background-clip: text;
           background-clip: text;
           -webkit-text-fill-color: transparent;
-          filter: drop-shadow(0 0 8px rgba(96, 165, 250, 0.4));
+          filter: drop-shadow(0 0 8px rgba(116, 179, 206, 0.4));
         }
 
         .preserve-3d {
@@ -237,20 +258,20 @@ export default function Landing() {
       <Background3D />
 
       {/* Hero Section */}
-      <section ref={heroRef} className="relative min-h-screen flex items-center justify-center px-4 py-20">
+      <section ref={heroRef} onMouseMove={handleMouseMove} className="relative min-h-screen flex items-center justify-center px-4 py-20">
         {/* 3D Floating Elements */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-20 left-10 w-32 h-32 animate-float opacity-20">
-            <div className="w-full h-full rounded-3xl bg-gradient-to-br from-blue-400 to-purple-500 transform rotate-12" 
-                 style={{ transform: `rotateX(45deg) rotateY(45deg)` }} />
+          <div className="absolute top-20 left-10 w-32 h-32 animate-float opacity-100" style={{ transform: `translate(${mousePosition.x * -20}px, ${mousePosition.y * -15}px)` }}>
+            <div className="w-full h-full rounded-3xl transform shadow-[0_0_40px_rgba(116,179,206,0.6)]"
+              style={{ background: 'linear-gradient(135deg, #D6F3F4, #74B3CE)', transform: `rotateX(45deg) rotateY(45deg)` }} />
           </div>
-          <div className="absolute top-40 right-20 w-24 h-24 animate-float-delayed opacity-20">
-            <div className="w-full h-full rounded-full bg-gradient-to-br from-pink-400 to-purple-500" 
-                 style={{ transform: `rotateX(45deg) rotateY(-45deg)` }} />
+          <div className="absolute top-40 right-20 w-24 h-24 animate-float-delayed opacity-100" style={{ transform: `translate(${mousePosition.x * 15}px, ${mousePosition.y * -20}px)` }}>
+            <div className="w-full h-full rounded-full transform shadow-[0_0_40px_rgba(214,243,244,0.8)]"
+              style={{ background: 'linear-gradient(135deg, #F0FDFD, #D6F3F4)', transform: `rotateX(45deg) rotateY(-45deg)` }} />
           </div>
-          <div className="absolute bottom-40 left-1/4 w-20 h-20 animate-pulse-slow opacity-20">
-            <div className="w-full h-full rounded-2xl bg-gradient-to-br from-cyan-400 to-blue-500 transform -rotate-12" 
-                 style={{ transform: `rotateX(-45deg) rotateY(45deg)` }} />
+          <div className="absolute bottom-40 left-1/4 w-20 h-20 animate-pulse-slow opacity-100" style={{ transform: `translate(${mousePosition.x * 10}px, ${mousePosition.y * 12}px)` }}>
+            <div className="w-full h-full rounded-2xl transform shadow-[0_0_40px_rgba(214,243,244,0.6)]"
+              style={{ background: 'linear-gradient(135deg, #F0FDFD, #D6F3F4)', transform: `rotateX(-45deg) rotateY(45deg)` }} />
           </div>
         </div>
 
@@ -258,9 +279,9 @@ export default function Landing() {
           {/* Logo with 3D effect */}
           <div className="flex items-center justify-center mb-8 animate-scale-in" style={{ animationDelay: '0.1s' }}>
             <div className="relative group">
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-3xl blur-2xl opacity-50 group-hover:opacity-75 transition-opacity duration-500" />
-              <div className="relative w-20 h-20 bg-gradient-to-br from-blue-400 via-purple-500 to-pink-500 rounded-3xl flex items-center justify-center shadow-2xl transform hover:scale-110 transition-transform duration-300">
-                <div className="text-white font-bold text-3xl">M+</div>
+              <div className="absolute inset-0 rounded-3xl blur-2xl opacity-50 group-hover:opacity-75 transition-opacity duration-500" style={{ background: 'linear-gradient(to right, #74B3CE, #508991)' }} />
+              <div className="relative w-20 h-20 rounded-3xl flex items-center justify-center shadow-2xl transform hover:scale-110 transition-transform duration-300" style={{ background: 'linear-gradient(135deg, #D6F3F4, #74B3CE, #508991)' }}>
+                <div className="text-slate-900 font-bold text-3xl">M+</div>
               </div>
             </div>
           </div>
@@ -269,16 +290,16 @@ export default function Landing() {
           <h1 className="text-7xl md:text-8xl font-bold mb-6 animate-slide-up" style={{ animationDelay: '0.2s' }}>
             <span className="text-gradient">MediSync</span>
           </h1>
-          
+
           <div className="relative inline-block mb-8 animate-slide-up" style={{ animationDelay: '0.3s' }}>
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 blur-3xl" />
-            <p className="relative text-3xl md:text-4xl text-slate-200 font-light tracking-wide">
+            <div className="absolute inset-0 bg-gradient-to-r from-brand-500/20 to-brand-700/20 blur-3xl" />
+            <p className="relative text-3xl md:text-4xl text-brand-900 font-light tracking-wide">
               Where Doctors, Pharmacies, and Patients{' '}
               <span className="text-gradient font-semibold">Move as One</span>
             </p>
           </div>
 
-          <p className="text-lg md:text-xl text-slate-400 mb-12 max-w-3xl mx-auto leading-relaxed animate-slide-up" style={{ animationDelay: '0.4s' }}>
+          <p className="text-lg md:text-xl text-brand-700 mb-12 max-w-3xl mx-auto leading-relaxed animate-slide-up" style={{ animationDelay: '0.4s' }}>
             A unified digital prescription and pharmacy coordination platform that eliminates confusion,
             reduces delays, and modernizes healthcare workflows.
           </p>
@@ -287,16 +308,17 @@ export default function Landing() {
           <div className="flex flex-col sm:flex-row gap-6 justify-center animate-slide-up" style={{ animationDelay: '0.5s' }}>
             <button
               onClick={() => navigate('/access')}
-              className="group relative inline-flex items-center gap-3 bg-gradient-to-r from-blue-500 to-purple-600 px-10 py-5 rounded-2xl font-semibold text-lg text-white overflow-hidden shadow-2xl hover:shadow-blue-500/50 transition-all duration-300 transform hover:-translate-y-1"
+              className="group relative inline-flex items-center gap-3 px-10 py-5 rounded-2xl font-semibold text-lg text-slate-900 overflow-hidden shadow-2xl transition-all duration-300 transform hover:-translate-y-1 btn-glow-hover border border-slate-900/10 hover:border-slate-900/20"
+              style={{ background: 'linear-gradient(to right, #74B3CE, #508991)' }}
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{ background: 'linear-gradient(to right, #508991, #004346)' }} />
               <span className="relative flex items-center gap-3">
                 Get Started <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </span>
             </button>
-            
-            <button className="group relative inline-flex items-center gap-3 glass-effect px-10 py-5 rounded-2xl font-semibold text-lg text-white hover:bg-white/10 transition-all duration-300 transform hover:-translate-y-1">
-              <PlayCircle className="w-5 h-5 group-hover:scale-110 transition-transform" /> 
+
+            <button className="group relative inline-flex items-center gap-3 glass-effect px-10 py-5 rounded-2xl font-semibold text-lg text-slate-900 hover:bg-slate-50 border border-slate-200 hover:border-slate-300 transition-all duration-300 transform hover:-translate-y-1">
+              <PlayCircle className="w-5 h-5 group-hover:scale-110 transition-transform" />
               See How It Works
             </button>
           </div>
@@ -304,9 +326,9 @@ export default function Landing() {
           {/* Trust Indicators */}
           <div className="mt-16 flex flex-wrap justify-center gap-8 text-sm animate-slide-up" style={{ animationDelay: '0.6s' }}>
             {['HIPAA Compliant', 'SOC 2 Certified', '99.9% Uptime', 'Bank-Grade Encryption'].map((badge, index) => (
-              <div key={index} className="flex items-center gap-2 glass-effect px-6 py-3 rounded-full hover:bg-white/10 transition-all duration-300">
+              <div key={index} className="flex items-center gap-2 glass-effect px-6 py-3 rounded-full hover:bg-slate-50 border border-slate-200 hover:border-slate-300 transition-all duration-300">
                 <ShieldCheck className="w-4 h-4 text-green-400" />
-                <span className="text-slate-300">{badge}</span>
+                <span className="text-brand-900">{badge}</span>
               </div>
             ))}
           </div>
@@ -318,13 +340,13 @@ export default function Landing() {
       <section className="relative py-32 px-4">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-20">
-            <h2 className="text-5xl md:text-6xl font-bold mb-6 text-white">
+            <h2 className="text-5xl md:text-6xl font-bold mb-6 text-slate-900">
               Healthcare's <span className="text-gradient">Prescription Problem</span>
             </h2>
-            <p className="text-xl text-slate-400">Traditional prescription workflows are broken</p>
+            <p className="text-xl text-brand-700">Traditional prescription workflows are broken</p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 perspective-1000">
+          <div ref={problemReveal.containerRef} className={`grid md:grid-cols-2 lg:grid-cols-4 gap-8 perspective-1000 reveal-stagger`}>
             {[
               {
                 icon: FileX,
@@ -359,30 +381,29 @@ export default function Landing() {
                 delay: '0.4s'
               },
             ].map((problem, index) => (
-              <div 
-                key={index} 
-                className="card-3d group animate-slide-up"
-                style={{ animationDelay: problem.delay }}
+              <div
+                key={index}
+                className={`card-3d group reveal-item ${problemReveal.isRevealed ? 'revealed' : ''}`}
               >
-                <div className="relative glass-effect p-8 rounded-3xl hover:bg-white/10 transition-all duration-500 h-full flex flex-col">
+                <div className="relative glass-effect p-8 rounded-3xl hover:bg-slate-50/50 border border-slate-200 hover:border-brand-300 transition-all duration-500 h-full flex flex-col">
                   {/* Gradient border effect */}
                   <div className={`absolute inset-0 bg-gradient-to-br ${problem.color} opacity-0 group-hover:opacity-20 rounded-3xl transition-opacity duration-500 blur-xl`} />
-                  
+
                   <div className="relative flex flex-col h-full">
                     <div className={`w-16 h-16 bg-gradient-to-br ${problem.color} rounded-2xl flex items-center justify-center mb-6 transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-500`}>
-                      <problem.icon className="w-8 h-8 text-white" />
+                      <problem.icon className="w-8 h-8 text-slate-900 icon-bounce-hover" />
                     </div>
-                    
-                    <h3 className="text-2xl font-bold mb-4 text-white group-hover:text-gradient transition-all duration-300">
+
+                    <h3 className="text-2xl font-bold mb-4 text-slate-900 group-hover:text-gradient transition-all duration-300">
                       {problem.title}
                     </h3>
-                    
-                    <p className="text-slate-400 mb-6 leading-relaxed flex-grow">
+
+                    <p className="text-brand-700 mb-6 leading-relaxed flex-grow">
                       {problem.description}
                     </p>
-                    
+
                     <div className={`inline-block px-4 py-2 bg-gradient-to-r ${problem.color} rounded-full self-start`}>
-                      <p className="text-sm font-bold text-white">{problem.stat}</p>
+                      <p className="text-sm font-bold text-slate-900">{problem.stat}</p>
                     </div>
                   </div>
                 </div>
@@ -401,16 +422,16 @@ export default function Landing() {
 
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="text-center mb-20">
-            <h2 className="text-5xl md:text-6xl font-bold mb-6 text-white">
+            <h2 className="text-5xl md:text-6xl font-bold mb-6 text-slate-900">
               One Platform. Three Stakeholders.{' '}
               <span className="text-gradient">Zero Confusion.</span>
             </h2>
-            <p className="text-xl text-slate-400 max-w-3xl mx-auto">
+            <p className="text-xl text-brand-700 max-w-3xl mx-auto">
               MediSync digitally connects doctors, patients, and pharmacies through intelligent coordination.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div ref={solutionReveal.containerRef} className={`grid md:grid-cols-2 lg:grid-cols-3 gap-8 reveal-stagger`}>
             {[
               {
                 icon: Mic,
@@ -461,12 +482,11 @@ export default function Landing() {
                 delay: '0.6s'
               },
             ].map((feature, index) => (
-              <div 
-                key={index} 
-                className="group animate-slide-up"
-                style={{ animationDelay: feature.delay }}
+              <div
+                key={index}
+                className={`group reveal-item ${solutionReveal.isRevealed ? 'revealed' : ''}`}
               >
-                <div className="relative glass-effect p-8 rounded-3xl hover:bg-white/10 transition-all duration-500 h-full transform hover:-translate-y-2">
+                <div className="relative glass-effect p-8 rounded-3xl hover:bg-slate-50/50 border border-slate-200 hover:border-brand-300 transition-all duration-500 h-full transform hover:-translate-y-2 hover:scale-[1.03] hover:shadow-xl hover:shadow-blue-500/10">
                   {/* Animated gradient border */}
                   <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
                     <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-20 rounded-3xl blur-xl`} />
@@ -476,15 +496,15 @@ export default function Landing() {
                     <div className="mb-6 relative">
                       <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-20 rounded-2xl blur-xl group-hover:blur-2xl transition-all duration-500`} />
                       <div className={`relative w-16 h-16 bg-gradient-to-br ${feature.color} rounded-2xl flex items-center justify-center transform group-hover:scale-110 group-hover:rotate-12 transition-all duration-500`}>
-                        <feature.icon className="w-8 h-8 text-white" />
+                        <feature.icon className="w-8 h-8 text-slate-900 icon-bounce-hover" />
                       </div>
                     </div>
 
-                    <h3 className="text-2xl font-bold mb-4 text-white group-hover:text-gradient transition-colors duration-300">
+                    <h3 className="text-2xl font-bold mb-4 text-slate-900 group-hover:text-gradient transition-colors duration-300">
                       {feature.title}
                     </h3>
 
-                    <p className="text-slate-400 mb-4 leading-relaxed">
+                    <p className="text-brand-700 mb-4 leading-relaxed">
                       {feature.description}
                     </p>
 
@@ -503,7 +523,7 @@ export default function Landing() {
       </section>
 
       {/* 3D Key Innovation */}
-      <section className="relative py-32 px-4">
+      <section ref={innovationReveal.ref} className={`relative py-32 px-4 reveal-item-scale ${innovationReveal.isRevealed ? 'revealed' : ''}`}>
         <div className="max-w-6xl mx-auto perspective-3000">
           <div
             className="glass-effect-3d-strong rounded-3xl overflow-hidden preserve-3d transform-gpu hover:translateZ(50px) transition-transform duration-500"
@@ -517,18 +537,18 @@ export default function Landing() {
                 </div>
 
                 <div className="relative preserve-3d">
-                  <div className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 px-6 py-3 rounded-full text-white font-semibold mb-8 transform-gpu hover:translateZ(20px) transition-transform duration-300">
+                  <div className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 px-6 py-3 rounded-full text-slate-900 font-semibold mb-8 transform-gpu hover:translateZ(20px) transition-transform duration-300">
                     <Sparkles className="w-5 h-5" />
                     Key Innovation
                   </div>
 
-                  <h3 className="text-5xl font-bold text-white mb-6 leading-tight">
+                  <h3 className="text-5xl font-bold text-slate-900 mb-6 leading-tight">
                     Voice-to-Text
                     <br />
                     <span className="text-gradient-3d">Prescriptions</span>
                   </h3>
 
-                  <p className="text-xl text-slate-300 mb-8 leading-relaxed">
+                  <p className="text-xl text-brand-900 mb-8 leading-relaxed">
                     Doctors speak naturally. AI converts instantly.
                     <span className="text-gradient-3d block mt-2">No handwriting. No errors. No delays.</span>
                   </p>
@@ -541,9 +561,9 @@ export default function Landing() {
                       { value: '50+', label: 'Languages' },
                       { value: '0', label: 'Handwriting' }
                     ].map((stat, i) => (
-                      <div key={i} className="glass-effect-3d p-4 rounded-xl text-center transform-gpu hover:translateZ(20px) transition-transform duration-300">
+                      <div key={i} className="glass-effect-3d p-4 rounded-xl text-center transform-gpu hover:translateZ(20px) border border-slate-200 transition-transform duration-300">
                         <div className="text-2xl font-bold text-gradient-3d">{stat.value}</div>
-                        <div className="text-sm text-slate-400">{stat.label}</div>
+                        <div className="text-sm text-brand-700">{stat.label}</div>
                       </div>
                     ))}
                   </div>
@@ -573,12 +593,12 @@ export default function Landing() {
 
                     {/* Central Mic Icon */}
                     <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-24 h-24 bg-gradient-to-br from-amber-500 to-orange-500 rounded-3xl flex items-center justify-center animate-pulse-glow-3d" style={{ transform: 'translateZ(50px)' }}>
-                      <Mic className="w-12 h-12 text-white" />
+                      <Mic className="w-12 h-12 text-slate-900" />
                     </div>
                   </div>
 
                   {/* Floating Text */}
-                  <div className="absolute -bottom-16 left-1/2 transform -translate-x-1/2 glass-effect-3d px-6 py-3 rounded-full whitespace-nowrap" style={{ transform: 'translateZ(30px)' }}>
+                  <div className="absolute -bottom-16 left-1/2 transform -translate-x-1/2 glass-effect-3d px-6 py-3 border border-slate-200 rounded-full whitespace-nowrap" style={{ transform: 'translateZ(30px)' }}>
                     <span className="text-gradient-3d">"Amoxicillin 500mg twice daily"</span>
                   </div>
                 </div>
@@ -586,17 +606,17 @@ export default function Landing() {
             </div>
           </div>
         </div>
-      </section>
+      </section >
 
 
       {/* Dual-Mode Platform */}
-      <section className="relative py-20 px-4">
+      < section ref={dualModeReveal.ref} className={`relative py-20 px-4 reveal-item ${dualModeReveal.isRevealed ? 'revealed' : ''}`}>
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white">
+            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-slate-900">
               One Platform, <span className="text-gradient">Two Powerful Modes</span>
             </h2>
-            <p className="text-xl text-slate-400">Designed for both independent users and healthcare institutions</p>
+            <p className="text-xl text-brand-700">Designed for both independent users and healthcare institutions</p>
           </div>
 
           {/* Mode Tabs */}
@@ -604,22 +624,20 @@ export default function Landing() {
             <div className="glass-effect-strong p-1 rounded-2xl inline-flex">
               <button
                 onClick={() => setActiveTab('local')}
-                className={`px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-300 flex items-center gap-3 ${
-                  activeTab === 'local' 
-                    ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg' 
-                    : 'text-slate-400 hover:text-white'
-                }`}
+                className={`px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-300 flex items-center gap-3 ${activeTab === 'local'
+                  ? 'bg-gradient-to-r from-brand-600 to-brand-400 text-slate-900 shadow-lg border border-brand-400/30'
+                  : 'text-brand-700 hover:text-slate-900'
+                  }`}
               >
                 <Smartphone className="w-5 h-5" />
                 Local User Mode
               </button>
               <button
                 onClick={() => setActiveTab('hospital')}
-                className={`px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-300 flex items-center gap-3 ${
-                  activeTab === 'hospital' 
-                    ? 'bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-lg' 
-                    : 'text-slate-400 hover:text-white'
-                }`}
+                className={`px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-300 flex items-center gap-3 ${activeTab === 'hospital'
+                  ? 'bg-gradient-to-r from-teal-600 to-teal-400 text-slate-900 shadow-lg border border-teal-400/30'
+                  : 'text-brand-700 hover:text-slate-900'
+                  }`}
               >
                 <Hospital className="w-5 h-5" />
                 Hospital Portal Mode
@@ -632,16 +650,16 @@ export default function Landing() {
             <div className="animate-slide-up">
               <div className="grid lg:grid-cols-2 gap-12 items-center">
                 <div>
-                  <div className="inline-block px-4 py-2 bg-blue-500/20 rounded-full text-blue-400 font-semibold mb-6">
+                  <div className="inline-block px-4 py-2 bg-brand-700/30 rounded-full text-brand-900 font-semibold mb-6">
                     For Independent Patients
                   </div>
-                  <h3 className="text-3xl font-bold text-white mb-4">
+                  <h3 className="text-3xl font-bold text-slate-900 mb-4">
                     Complete Prescription Management
                   </h3>
-                  <p className="text-lg text-slate-400 mb-8">
+                  <p className="text-lg text-brand-700 mb-8">
                     No hospital connection? No problem. Use MediSync independently to manage all your prescriptions.
                   </p>
-                  
+
                   <div className="space-y-6">
                     {[
                       { icon: Scan, text: 'Upload handwritten prescriptions, convert to digital instantly' },
@@ -650,11 +668,11 @@ export default function Landing() {
                       { icon: Bell, text: 'Track order status and get notifications when ready' }
                     ].map((item, i) => (
                       <div key={i} className="flex items-start gap-4">
-                        <div className="w-10 h-10 bg-blue-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                          <item.icon className="w-5 h-5 text-blue-400" />
+                        <div className="w-10 h-10 bg-brand-700/30 rounded-xl flex items-center justify-center flex-shrink-0">
+                          <item.icon className="w-5 h-5 text-brand-900" />
                         </div>
                         <div>
-                          <p className="text-white">{item.text}</p>
+                          <p className="text-slate-900">{item.text}</p>
                         </div>
                       </div>
                     ))}
@@ -663,15 +681,15 @@ export default function Landing() {
 
                 <div className="relative">
                   <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-3xl blur-3xl opacity-20" />
-                  <div className="relative glass-effect-strong p-8 rounded-3xl border border-blue-500/40 hover:border-blue-500/70 transition-colors duration-300">
-                    <div className="flex items-center gap-4 mb-6 border-b border-slate-700 pb-6">
-                      <Smartphone className="w-8 h-8 text-blue-400" />
+                  <div className="relative glass-effect-strong p-8 rounded-3xl border border-brand-500/40 hover:border-brand-500/70 transition-colors duration-300">
+                    <div className="flex items-center gap-4 mb-6 border-b border-brand-800 pb-6">
+                      <Smartphone className="w-8 h-8 text-brand-700" />
                       <div>
-                        <h4 className="text-white font-bold">Local User Dashboard</h4>
-                        <p className="text-slate-400 text-sm">Everything at your fingertips</p>
+                        <h4 className="text-slate-900 font-bold">Local User Dashboard</h4>
+                        <p className="text-brand-700 text-sm">Everything at your fingertips</p>
                       </div>
                     </div>
-                    
+
                     <div className="space-y-4">
                       {[
                         { label: 'Recent Prescription', status: 'Ready for pickup', time: '5 min ago' },
@@ -680,11 +698,11 @@ export default function Landing() {
                       ].map((item, i) => (
                         <div key={i} className="flex items-center justify-between p-4 bg-white/5 rounded-xl">
                           <div>
-                            <p className="text-white font-medium">{item.label}</p>
-                            <p className="text-sm text-slate-400">{item.status}</p>
+                            <p className="text-slate-900 font-medium">{item.label}</p>
+                            <p className="text-sm text-brand-700">{item.status}</p>
                           </div>
                           <div className="text-right">
-                            <p className="text-xs text-slate-500">{item.time}</p>
+                            <p className="text-xs text-brand-500">{item.time}</p>
                           </div>
                         </div>
                       ))}
@@ -703,15 +721,15 @@ export default function Landing() {
                 <div className="group">
                   <div className="relative glass-effect-strong p-8 rounded-3xl h-full hover-lift border border-blue-500/40 hover:border-blue-500/70 hover:bg-white/10 transition-all duration-500">
                     <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-cyan-500 opacity-0 group-hover:opacity-20 rounded-3xl blur-2xl transition-opacity duration-500" />
-                    
+
                     <div className="relative">
                       <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center mb-6 transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-500">
-                        <Stethoscope className="w-8 h-8 text-white" />
+                        <Stethoscope className="w-8 h-8 text-slate-900" />
                       </div>
-                      
-                      <h3 className="text-2xl font-bold text-white mb-2 group-hover:text-gradient transition-colors duration-300">Doctor Portal</h3>
-                      <p className="text-sm text-blue-400 mb-4">For healthcare providers</p>
-                      
+
+                      <h3 className="text-2xl font-bold text-slate-900 mb-2 group-hover:text-gradient transition-colors duration-300">Doctor Portal</h3>
+                      <p className="text-sm text-brand-700 mb-4">For healthcare providers</p>
+
                       <div className="space-y-4">
                         {[
                           'Voice-to-text prescription creation',
@@ -722,15 +740,15 @@ export default function Landing() {
                         ].map((feature, i) => (
                           <div key={i} className="flex items-start gap-3">
                             <CheckCircle2 className="w-4 h-4 text-blue-400 flex-shrink-0 mt-1" />
-                            <span className="text-slate-400 text-sm">{feature}</span>
+                            <span className="text-brand-700 text-sm">{feature}</span>
                           </div>
                         ))}
                       </div>
-                      
+
                       <div className="mt-6 pt-6 border-t border-slate-700">
                         <div className="flex items-center gap-2">
-                          <Mic className="w-4 h-4 text-blue-400" />
-                          <span className="text-sm text-blue-400">Save 10+ minutes per patient</span>
+                          <Mic className="w-4 h-4 text-brand-700" />
+                          <span className="text-sm text-brand-700">Save 10+ minutes per patient</span>
                         </div>
                       </div>
                     </div>
@@ -741,15 +759,15 @@ export default function Landing() {
                 <div className="group">
                   <div className="relative glass-effect-strong p-8 rounded-3xl h-full hover-lift border border-green-500/40 hover:border-green-500/70 hover:bg-white/10 transition-all duration-500">
                     <div className="absolute inset-0 bg-gradient-to-br from-green-500 to-emerald-500 opacity-0 group-hover:opacity-20 rounded-3xl blur-2xl transition-opacity duration-500" />
-                    
+
                     <div className="relative">
                       <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center mb-6 transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-500">
-                        <Building className="w-8 h-8 text-white" />
+                        <Building className="w-8 h-8 text-slate-900" />
                       </div>
-                      
-                      <h3 className="text-2xl font-bold text-white mb-2 group-hover:text-gradient transition-colors duration-300">Pharmacy Portal</h3>
-                      <p className="text-sm text-green-400 mb-4">For pharmacy staff</p>
-                      
+
+                      <h3 className="text-2xl font-bold text-slate-900 mb-2 group-hover:text-gradient transition-colors duration-300">Pharmacy Portal</h3>
+                      <p className="text-sm text-brand-700 mb-4">For pharmacy staff</p>
+
                       <div className="space-y-4">
                         {[
                           'Instant prescription receipt',
@@ -760,15 +778,15 @@ export default function Landing() {
                         ].map((feature, i) => (
                           <div key={i} className="flex items-start gap-3">
                             <CheckCircle2 className="w-4 h-4 text-green-400 flex-shrink-0 mt-1" />
-                            <span className="text-slate-400 text-sm">{feature}</span>
+                            <span className="text-slate-600 text-sm">{feature}</span>
                           </div>
                         ))}
                       </div>
-                      
+
                       <div className="mt-6 pt-6 border-t border-slate-700">
                         <div className="flex items-center gap-2">
-                          <Zap className="w-4 h-4 text-green-400" />
-                          <span className="text-sm text-green-400">Prepare before patient arrives</span>
+                          <Zap className="w-4 h-4 text-brand-700" />
+                          <span className="text-sm text-brand-700">Prepare before patient arrives</span>
                         </div>
                       </div>
                     </div>
@@ -779,15 +797,15 @@ export default function Landing() {
                 <div className="group">
                   <div className="relative glass-effect-strong p-8 rounded-3xl h-full hover-lift border border-purple-500/40 hover:border-purple-500/70 hover:bg-white/10 transition-all duration-500">
                     <div className="absolute inset-0 bg-gradient-to-br from-purple-500 to-pink-500 opacity-0 group-hover:opacity-20 rounded-3xl blur-2xl transition-opacity duration-500" />
-                    
+
                     <div className="relative">
                       <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mb-6 transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-500">
-                        <User className="w-8 h-8 text-white" />
+                        <User className="w-8 h-8 text-slate-900" />
                       </div>
-                      
-                      <h3 className="text-2xl font-bold text-white mb-2 group-hover:text-gradient transition-colors duration-300">Patient Portal</h3>
+
+                      <h3 className="text-2xl font-bold text-slate-900 mb-2 group-hover:text-gradient transition-colors duration-300">Patient Portal</h3>
                       <p className="text-sm text-purple-400 mb-4">For patients & families</p>
-                      
+
                       <div className="space-y-4">
                         {[
                           'View digital prescriptions',
@@ -798,11 +816,11 @@ export default function Landing() {
                         ].map((feature, i) => (
                           <div key={i} className="flex items-start gap-3">
                             <CheckCircle2 className="w-4 h-4 text-purple-400 flex-shrink-0 mt-1" />
-                            <span className="text-slate-400 text-sm">{feature}</span>
+                            <span className="text-slate-600 text-sm">{feature}</span>
                           </div>
                         ))}
                       </div>
-                      
+
                       <div className="mt-6 pt-6 border-t border-slate-700">
                         <div className="flex items-center gap-2">
                           <Bell className="w-4 h-4 text-purple-400" />
@@ -819,166 +837,99 @@ export default function Landing() {
       </section>
 
       {/* How It Works - Workflow Diagram */}
-      <section className="relative py-32 px-4">
+      <section ref={workflowReveal.containerRef} className="relative py-32 px-4">
         <div className="w-full max-w-6xl mx-auto">
           {/* Section Title */}
           <div className="text-center mb-16">
-            <h2 className="text-5xl md:text-6xl font-bold text-white mb-4">
-              How MediSync <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">Works</span>
+            <h2 className="text-5xl md:text-6xl font-bold text-slate-900 mb-4">
+              How MediSync <span className="text-gradient">Works</span>
             </h2>
-            <p className="text-slate-400 text-lg">From prescription to pickup in 4 simple steps</p>
+            <p className="text-brand-700 text-lg">From prescription to pickup in 4 simple steps</p>
           </div>
 
-          {/* Workflow Cards */}
-          <div className="relative flex flex-col lg:flex-row items-start justify-between gap-8">
+          {/* Main Layout: Stepper on Left, Stats on Right */}
+          <div className="flex flex-col lg:flex-row gap-12 mt-16 items-start justify-center max-w-6xl mx-auto">
+            {/* Vertical Stepper Content */}
+            <div className="relative w-full max-w-2xl shrink-0">
+              {/* Connecting Line */}
+              <div className="absolute left-[39px] top-12 bottom-12 w-0.5 step-line-stitch opacity-40"></div>
 
-            {/* Step 1: Doctor */}
-            <div className="relative flex-1 w-full group">
-              <div className="step-card bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-xl rounded-2xl p-6 border border-blue-500/30">
-                <div className="absolute -top-4 -left-2 w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-xl">1</div>
-                <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
-                  <Stethoscope className="w-8 h-8 text-white" />
+              <div className="flex flex-col gap-12">
+                {/* Step 1 */}
+                <div className={`relative flex gap-8 group reveal-item ${workflowReveal.isRevealed ? 'revealed' : ''}`}>
+                  <div className="z-10 flex size-20 shrink-0 items-center justify-center rounded-2xl bg-brand-500/20 border border-brand-500/40 glow-cyan-stitch text-brand-700 transform group-hover:scale-110 transition-transform duration-300">
+                    <FileScan className="w-8 h-8" />
+                  </div>
+                  <div className="glass-card-stitch p-8 rounded-2xl flex-1 transform group-hover:-translate-y-2 transition-transform duration-300">
+                    <span className="text-sm font-bold text-brand-700 uppercase tracking-widest mb-2 block">Step 01</span>
+                    <h3 className="text-slate-900 text-2xl font-bold font-display mb-3">Digital Conversion</h3>
+                    <p className="text-brand-700 text-base leading-relaxed">
+                      Simply upload a photo of your handwritten prescription. Our AI instantly digitizes it for accuracy and secure processing.
+                    </p>
+                  </div>
                 </div>
-                <h3 className="text-xl font-bold text-white text-center mb-3">Doctor</h3>
-                <div className="space-y-2">
-                  {[
-                    { icon: Mic, text: 'Voice-to-text prescription', color: 'text-blue-400' },
-                    { icon: Scan, text: 'OCR handwritten scripts', color: 'text-purple-400' },
-                    { icon: FileText, text: 'Digital formatting', color: 'text-green-400' },
-                  ].map((item, i) => (
-                    <div key={i} className="flex items-center gap-2 text-sm text-slate-300 bg-white/5 p-2 rounded-lg">
-                      <item.icon className={`w-4 h-4 ${item.color}`} />
-                      <span>{item.text}</span>
-                    </div>
-                  ))}
+
+                {/* Step 2 */}
+                <div className={`relative flex gap-8 group reveal-item ${workflowReveal.isRevealed ? 'revealed' : ''}`} style={{ transitionDelay: '0.1s' }}>
+                  <div className="z-10 flex size-20 shrink-0 items-center justify-center rounded-2xl bg-teal-500/20 border border-teal-500/40 glow-cyan-stitch text-teal-700 transform group-hover:scale-110 transition-transform duration-300">
+                    <MapPin className="w-8 h-8" />
+                  </div>
+                  <div className="glass-card-stitch p-8 rounded-2xl flex-1 transform group-hover:-translate-y-2 transition-transform duration-300">
+                    <span className="text-sm font-bold text-teal-700 uppercase tracking-widest mb-2 block">Step 02</span>
+                    <h3 className="text-slate-900 text-2xl font-bold font-display mb-3">Real-time Search</h3>
+                    <p className="text-brand-700 text-base leading-relaxed">
+                      Instantly scan inventory across hundreds of local pharmacies to find exactly what you need in stock.
+                    </p>
+                  </div>
                 </div>
-                <div className="mt-4 flex items-center justify-center gap-1 text-xs text-slate-400">
-                  <Clock className="w-3 h-3" /><span>30 seconds</span>
+
+                {/* Step 3 */}
+                <div className={`relative flex gap-8 group reveal-item ${workflowReveal.isRevealed ? 'revealed' : ''}`} style={{ transitionDelay: '0.2s' }}>
+                  <div className="z-10 flex size-20 shrink-0 items-center justify-center rounded-2xl bg-brand-500/20 border border-brand-500/40 glow-cyan-stitch text-brand-700 transform group-hover:scale-110 transition-transform duration-300">
+                    <Scale className="w-8 h-8" />
+                  </div>
+                  <div className="glass-card-stitch p-8 rounded-2xl flex-1 transform group-hover:-translate-y-2 transition-transform duration-300">
+                    <span className="text-sm font-bold text-brand-700 uppercase tracking-widest mb-2 block">Step 03</span>
+                    <h3 className="text-slate-900 text-2xl font-bold font-display mb-3">Smart Comparison</h3>
+                    <p className="text-brand-700 text-base leading-relaxed">
+                      Compare real-time prices and pickup distances. Choose the option that best fits your budget and schedule.
+                    </p>
+                  </div>
                 </div>
-              </div>
-              <div className="hidden lg:flex absolute -right-4 top-1/2 -translate-y-1/2 z-10">
-                <ArrowRight className="w-6 h-6 text-blue-400 animate-pulse" />
+
+                {/* Step 4 */}
+                <div className={`relative flex gap-8 group reveal-item ${workflowReveal.isRevealed ? 'revealed' : ''}`} style={{ transitionDelay: '0.3s' }}>
+                  <div className="z-10 flex size-20 shrink-0 items-center justify-center rounded-2xl bg-teal-500/20 border border-teal-500/40 glow-cyan-stitch text-teal-700 transform group-hover:scale-110 transition-transform duration-300">
+                    <BellRing className="w-8 h-8" />
+                  </div>
+                  <div className="glass-card-stitch p-8 rounded-2xl flex-1 transform group-hover:-translate-y-2 transition-transform duration-300">
+                    <span className="text-sm font-bold text-teal-700 uppercase tracking-widest mb-2 block">Step 04</span>
+                    <h3 className="text-slate-900 text-2xl font-bold font-display mb-3">Live Tracking</h3>
+                    <p className="text-brand-700 text-base leading-relaxed">
+                      Receive push notifications as your order is verified, prepared, and ready for express pickup.
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* Step 2: AI Engine */}
-            <div className="relative flex-1 w-full group">
-              <div className="step-card bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-xl rounded-2xl p-6 border border-purple-500/30">
-                <div className="absolute -top-4 -left-2 w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-xl">2</div>
-                <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
-                  <Cpu className="w-8 h-8 text-white" />
-                </div>
-                <h3 className="text-xl font-bold text-white text-center mb-3">AI Engine</h3>
-                <div className="space-y-2">
-                  {[
-                    { icon: Sparkles, text: 'Real-time processing', color: 'text-yellow-400' },
-                    { icon: CheckCircle2, text: 'Dosage validation', color: 'text-green-400' },
-                    { icon: Zap, text: 'Instant structuring', color: 'text-purple-400' },
-                  ].map((item, i) => (
-                    <div key={i} className="flex items-center gap-2 text-sm text-slate-300 bg-white/5 p-2 rounded-lg">
-                      <item.icon className={`w-4 h-4 ${item.color}`} />
-                      <span>{item.text}</span>
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-4 flex items-center justify-center gap-1 text-xs text-slate-400">
-                  <Clock className="w-3 h-3" /><span>2 seconds</span>
-                </div>
-              </div>
-              <div className="hidden lg:flex absolute -right-4 top-1/2 -translate-y-1/2 z-10">
-                <ArrowRight className="w-6 h-6 text-purple-400 animate-pulse" />
+            {/* Right Side Stats */}
+            <div className={`w-full lg:max-w-xs lg:sticky lg:top-32 reveal-item ${workflowReveal.isRevealed ? 'revealed' : ''}`} style={{ transitionDelay: '0.4s' }}>
+              <div className="grid grid-cols-2 lg:grid-cols-1 gap-6">
+                {[
+                  { label: 'Total Time', value: '< 5 min', icon: Clock, color: 'text-blue-400' },
+                  { label: 'Accuracy', value: '99.9%', icon: CheckCircle2, color: 'text-green-400' },
+                  { label: 'Steps', value: '4', icon: Cpu, color: 'text-purple-400' },
+                  { label: 'Wait Time', value: '0 min', icon: Zap, color: 'text-orange-400' },
+                ].map((stat, i) => (
+                  <div key={i} className="step-badge rounded-2xl p-6 text-center shadow-lg transform hover:-translate-y-1 hover:shadow-2xl border border-transparent hover:border-brand-500/30 transition-all duration-300 bg-brand-800/50 backdrop-blur-xl">
+                    <stat.icon className={`w-8 h-8 ${stat.color} mx-auto mb-3 drop-shadow-[0_0_8px_currentColor]`} />
+                    <div className="text-3xl font-bold text-slate-900 mb-1">{stat.value}</div>
+                    <div className="text-sm font-medium text-brand-700">{stat.label}</div>
+                  </div>
+                ))}
               </div>
             </div>
-
-            {/* Step 3: Pharmacy */}
-            <div className="relative flex-1 w-full group">
-              <div className="step-card bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-xl rounded-2xl p-6 border border-green-500/30">
-                <div className="absolute -top-4 -left-2 w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-xl">3</div>
-                <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
-                  <Building className="w-8 h-8 text-white" />
-                </div>
-                <h3 className="text-xl font-bold text-white text-center mb-3">Pharmacy</h3>
-                <div className="space-y-2">
-                  {[
-                    { icon: Package, text: 'Instant receipt', color: 'text-green-400' },
-                    { icon: Map, text: 'Inventory check', color: 'text-blue-400' },
-                    { icon: Bell, text: 'Prep notification', color: 'text-yellow-400' },
-                  ].map((item, i) => (
-                    <div key={i} className="flex items-center gap-2 text-sm text-slate-300 bg-white/5 p-2 rounded-lg">
-                      <item.icon className={`w-4 h-4 ${item.color}`} />
-                      <span>{item.text}</span>
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-4 flex items-center justify-center gap-1 text-xs text-slate-400">
-                  <Clock className="w-3 h-3" /><span>Prepped before arrival</span>
-                </div>
-              </div>
-              <div className="hidden lg:flex absolute -right-4 top-1/2 -translate-y-1/2 z-10">
-                <ArrowRight className="w-6 h-6 text-green-400 animate-pulse" />
-              </div>
-            </div>
-
-            {/* Step 4: Patient */}
-            <div className="relative flex-1 w-full group">
-              <div className="step-card bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-xl rounded-2xl p-6 border border-orange-500/30">
-                <div className="absolute -top-4 -left-2 w-10 h-10 bg-gradient-to-r from-orange-500 to-red-600 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-xl">4</div>
-                <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl flex items-center justify-center transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
-                  <User className="w-8 h-8 text-white" />
-                </div>
-                <h3 className="text-xl font-bold text-white text-center mb-3">Patient</h3>
-                <div className="space-y-2">
-                  {[
-                    { icon: Bell, text: 'Ready notification', color: 'text-orange-400' },
-                    { icon: FileText, text: 'Digital prescription', color: 'text-blue-400' },
-                    { icon: CheckCircle2, text: 'Zero wait pickup', color: 'text-green-400' },
-                  ].map((item, i) => (
-                    <div key={i} className="flex items-center gap-2 text-sm text-slate-300 bg-white/5 p-2 rounded-lg">
-                      <item.icon className={`w-4 h-4 ${item.color}`} />
-                      <span>{item.text}</span>
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-4 flex items-center justify-center gap-1 text-xs text-slate-400">
-                  <Clock className="w-3 h-3" /><span>Ready immediately</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Connecting SVG line (desktop) */}
-          <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute top-1/2 left-0 w-full h-32 pointer-events-none hidden lg:block" style={{ transform: 'translateY(-50%)' }}>
-            <defs>
-              <linearGradient id="wf-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#60a5fa" />
-                <stop offset="50%" stopColor="#a78bfa" />
-                <stop offset="100%" stopColor="#ec4899" />
-              </linearGradient>
-              <filter id="wf-glow">
-                <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
-                <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
-              </filter>
-            </defs>
-            <path d="M 15 50 L 85 50" stroke="url(#wf-gradient)" strokeWidth="0.5" strokeDasharray="3 3" filter="url(#wf-glow)" className="animate-pulse" />
-            <circle cx="25" cy="50" r="1.5" fill="#60a5fa" filter="url(#wf-glow)">
-              <animate attributeName="cx" values="15;85;15" dur="8s" repeatCount="indefinite" />
-            </circle>
-          </svg>
-
-          {/* Bottom Stats */}
-          <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[
-              { label: 'Total Time', value: '< 5 min', icon: Clock, color: 'text-blue-400' },
-              { label: 'Accuracy', value: '99.9%', icon: CheckCircle2, color: 'text-green-400' },
-              { label: 'Steps', value: '4', icon: Cpu, color: 'text-purple-400' },
-              { label: 'Wait Time', value: '0 min', icon: Zap, color: 'text-orange-400' },
-            ].map((stat, i) => (
-              <div key={i} className="step-badge rounded-xl p-4 text-center">
-                <stat.icon className={`w-5 h-5 ${stat.color} mx-auto mb-2`} />
-                <div className="text-xl font-bold text-white">{stat.value}</div>
-                <div className="text-xs text-slate-400">{stat.label}</div>
-              </div>
-            ))}
           </div>
 
           {/* Mobile Timeline */}
@@ -992,12 +943,12 @@ export default function Landing() {
                 { step: 4, title: 'Patient picks up', time: 'Zero wait', color: 'from-orange-500 to-orange-600' },
               ].map((item, i) => (
                 <div key={i} className="relative flex items-start gap-4 mb-6 pl-8">
-                  <div className={`absolute left-0 w-8 h-8 bg-gradient-to-r ${item.color} rounded-xl flex items-center justify-center text-white font-bold text-sm`}>
+                  <div className={`absolute left-0 w-8 h-8 bg-gradient-to-r ${item.color} rounded-xl flex items-center justify-center text-slate-900 font-bold text-sm`}>
                     {item.step}
                   </div>
-                  <div className="flex-1 glass-effect-3d p-3 rounded-lg">
-                    <p className="text-white font-medium">{item.title}</p>
-                    <p className="text-xs text-slate-400 mt-1">{item.time}</p>
+                  <div className="flex-1 glass-effect-3d p-3 rounded-lg border border-slate-200 hover:border-slate-300 transition-colors">
+                    <p className="text-slate-900 font-medium">{item.title}</p>
+                    <p className="text-xs text-slate-600 mt-1">{item.time}</p>
                   </div>
                 </div>
               ))}
@@ -1007,13 +958,13 @@ export default function Landing() {
       </section>
 
       {/* Impact Metrics with 3D cards */}
-      <section className="relative py-32 px-4">
+      <section ref={impactReveal.containerRef} className="relative py-32 px-4">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-5xl md:text-6xl font-bold text-center mb-20 text-white">
+          <h2 className="text-5xl md:text-6xl font-bold text-center mb-20 text-slate-900">
             Real Results, <span className="text-gradient">Real Impact</span>
           </h2>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 reveal-stagger">
             {[
               { value: '95%', label: 'Reduction in prescription errors', icon: ShieldCheck, color: 'from-green-500 to-emerald-500', delay: '0.1s' },
               { value: '80%', label: 'Faster medicine fulfillment', icon: Zap, color: 'from-blue-500 to-cyan-500', delay: '0.2s' },
@@ -1022,27 +973,26 @@ export default function Landing() {
               { value: '100%', label: 'Digital prescription clarity', icon: FileCheck, color: 'from-indigo-500 to-purple-500', delay: '0.5s' },
               { value: '24/7', label: 'Pharmacy coordination', icon: RefreshCw, color: 'from-teal-500 to-cyan-500', delay: '0.6s' },
             ].map((metric, index) => (
-              <div 
-                key={index} 
-                className="group animate-slide-up"
-                style={{ animationDelay: metric.delay }}
+              <div
+                key={index}
+                className={`group reveal-item ${impactReveal.isRevealed ? 'revealed' : ''}`}
               >
-                <div className="relative glass-effect p-10 rounded-3xl text-center hover:bg-white/10 transition-all duration-500 transform hover:-translate-y-2 h-full">
+                <div className="relative glass-effect p-10 rounded-3xl text-center hover:bg-slate-50 border border-slate-200 hover:border-slate-300 transition-all duration-500 transform hover:-translate-y-2 h-full">
                   {/* Gradient glow */}
                   <div className={`absolute inset-0 bg-gradient-to-br ${metric.color} opacity-0 group-hover:opacity-30 rounded-3xl blur-2xl transition-opacity duration-500`} />
 
                   <div className="relative">
                     <div className="mb-6 flex justify-center">
                       <div className={`w-20 h-20 bg-gradient-to-br ${metric.color} rounded-2xl flex items-center justify-center transform group-hover:scale-110 group-hover:rotate-12 transition-all duration-500 shadow-xl`}>
-                        <metric.icon className="w-10 h-10 text-white" />
+                        <metric.icon className="w-10 h-10 text-slate-900" />
                       </div>
                     </div>
 
-                    <div className={`text-6xl font-bold mb-4 bg-gradient-to-r ${metric.color} bg-clip-text text-transparent group-hover:scale-110 transition-transform duration-300 inline-block`}>
-                      {metric.value}
+                    <div ref={index < 5 ? countups[index].ref : undefined} className={`text-6xl font-bold mb-4 bg-gradient-to-r ${metric.color} bg-clip-text text-transparent group-hover:scale-110 transition-transform duration-300 inline-block`}>
+                      {index < 5 ? `${countups[index].count}${metric.value.replace(/[0-9]/g, '')}` : metric.value}
                     </div>
 
-                    <div className="text-slate-400 leading-relaxed group-hover:text-slate-300 transition-colors duration-300">
+                    <div className="text-brand-700 leading-relaxed group-hover:text-brand-900 transition-colors duration-300">
                       {metric.label}
                     </div>
                   </div>
@@ -1054,45 +1004,44 @@ export default function Landing() {
       </section>
 
       {/* Final CTA Section */}
-      <section className="relative py-32 px-4 overflow-hidden">
+      <section ref={ctaReveal.ref} className={`relative py-32 px-4 overflow-hidden reveal-item ${ctaReveal.isRevealed ? 'revealed' : ''}`}>
         {/* Animated background elements */}
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl animate-pulse-slow" />
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '2s' }} />
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl gradient-shift-slow" />
+          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl gradient-shift-slow-delayed" />
         </div>
 
         <div className="max-w-5xl mx-auto text-center relative z-10">
-          <h2 className="text-5xl md:text-6xl font-bold mb-8 text-white">
+          <h2 className="text-5xl md:text-6xl font-bold mb-8 text-slate-900">
             Ready to Transform Your <span className="text-gradient">Healthcare Workflow?</span>
           </h2>
-          
-          <p className="text-xl text-slate-300 mb-12 leading-relaxed max-w-3xl mx-auto">
+
+          <p className="text-xl text-brand-700 mb-12 leading-relaxed max-w-3xl mx-auto">
             Join hospitals, clinics, and pharmacies modernizing patient care with MediSync.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-6 justify-center mb-16">
             <button
               onClick={() => navigate('/access')}
-              className="group relative inline-flex items-center gap-3 bg-gradient-to-r from-blue-500 to-purple-600 px-12 py-6 rounded-2xl font-bold text-xl text-white overflow-hidden shadow-2xl hover:shadow-blue-500/50 transition-all duration-300 transform hover:-translate-y-1"
+              className="group relative inline-flex items-center gap-3 bg-gradient-to-r from-brand-700 to-brand-500 px-12 py-6 rounded-2xl font-bold text-xl text-slate-900 overflow-hidden shadow-2xl hover:shadow-brand-500/50 transition-all duration-300 transform hover:-translate-y-1 btn-glow-hover border border-brand-900/10 hover:border-brand-900/20"
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="absolute inset-0 bg-gradient-to-r from-brand-500 to-brand-300 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               <span className="relative">Start Free Trial</span>
             </button>
-            
-            <button className="group relative inline-flex items-center gap-3 glass-effect px-12 py-6 rounded-2xl font-bold text-xl text-white hover:bg-white/10 transition-all duration-300 transform hover:-translate-y-1 border-2 border-white/20">
+
+            <button className="group relative inline-flex items-center gap-3 glass-effect px-12 py-6 rounded-2xl font-bold text-xl text-slate-900 hover:bg-slate-50 transition-all duration-300 transform hover:-translate-y-1 border-2 border-slate-900/20 hover:border-slate-900/30 btn-glow-hover">
               Schedule Demo
             </button>
           </div>
 
           <div className="flex flex-wrap justify-center gap-6">
             {['HIPAA Compliant', 'SOC 2 Certified', '99.9% Uptime', 'Bank-Grade Encryption'].map((badge, index) => (
-              <div 
-                key={index} 
-                className="flex items-center gap-2 glass-effect px-8 py-4 rounded-full hover:bg-white/10 transition-all duration-300 animate-slide-up"
-                style={{ animationDelay: `${0.1 * index}s` }}
+              <div
+                key={index}
+                className="flex items-center gap-2 glass-effect px-8 py-4 rounded-full hover:bg-slate-50 border border-slate-200 hover:border-slate-300 transition-all duration-300"
               >
                 <ShieldCheck className="w-5 h-5 text-green-400" />
-                <span className="text-slate-300 font-medium">{badge}</span>
+                <span className="text-brand-900 font-medium">{badge}</span>
               </div>
             ))}
           </div>
@@ -1100,15 +1049,15 @@ export default function Landing() {
       </section>
 
       {/* Footer */}
-      <footer className="relative bg-slate-950 text-slate-400 py-16 px-4 border-t border-slate-800">
+      <footer className="relative bg-brand-900 text-brand-700 py-16 px-4 border-t border-brand-800">
         <div className="max-w-7xl mx-auto text-center">
           <div className="mb-6">
             <div className="inline-block">
               <div className="text-4xl font-bold text-gradient mb-2">MediSync</div>
-              <p className="text-slate-500">Where Doctors, Pharmacies, and Patients Move as One.</p>
+              <p className="text-brand-500">Where Doctors, Pharmacies, and Patients Move as One.</p>
             </div>
           </div>
-          <p className="text-sm text-slate-600">&copy; 2026 MediSync. All rights reserved.</p>
+          <p className="text-sm text-brand-500">&copy; 2026 MediSync. All rights reserved.</p>
         </div>
       </footer>
     </div>
