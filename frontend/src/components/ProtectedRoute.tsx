@@ -15,7 +15,7 @@ export default function ProtectedRoute({ children, requiredRole }: ProtectedRout
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="w-16 h-16 border-4 border-brand-700 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600">Loading...</p>
         </div>
       </div>
@@ -40,7 +40,7 @@ export default function ProtectedRoute({ children, requiredRole }: ProtectedRout
           </p>
           <button
             onClick={() => navigate('/')}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="px-6 py-2 bg-brand-700 text-brand-900 rounded-lg hover:bg-blue-700 transition-colors"
           >
             Go Home
           </button>

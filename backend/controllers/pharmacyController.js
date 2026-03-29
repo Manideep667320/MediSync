@@ -1,6 +1,6 @@
 const Pharmacy = require('../models/Pharmacy');
 const Order = require('../models/Order');
-const Inventory = require('../models/Inventory');
+const PharmacyInventory = require('../models/PharmacyInventory');
 const Billing = require('../models/Billing');
 const Prescription = require('../models/Prescription');
 
@@ -8,7 +8,7 @@ const Prescription = require('../models/Prescription');
 exports.getDashboard = async (req, res) => {
   try {
     const pharmacy = await Pharmacy.findOne({ userId: req.user.userId });
-    
+
     if (!pharmacy) {
       return res.status(404).json({
         success: false,
@@ -30,9 +30,9 @@ exports.getDashboard = async (req, res) => {
       status: { $nin: ['completed', 'cancelled'] }
     });
 
-    const lowStockItems = await Inventory.countDocuments({
+    const lowStockItems = await PharmacyInventory.countDocuments({
       pharmacyId: pharmacy._id,
-      status: 'low_stock'
+      stock: { $lt: 20 } // Threshold for low stock based on new model
     });
 
     // Recent orders
@@ -68,7 +68,15 @@ exports.getOrders = async (req, res) => {
   try {
     const pharmacy = await Pharmacy.findOne({ userId: req.user.userId });
     const { status, page = 1, limit = 10 } = req.query;
-    
+
+    if (!pharmacy) {
+      return res.status(200).json({
+        success: false,
+        requireProfileSetup: true,
+        message: 'Pharmacy profile not found'
+      });
+    }
+
     const query = { pharmacyId: pharmacy._id };
     if (status) query.status = status;
 
@@ -104,7 +112,15 @@ exports.getOrders = async (req, res) => {
 exports.getOrder = async (req, res) => {
   try {
     const pharmacy = await Pharmacy.findOne({ userId: req.user.userId });
-    
+
+    if (!pharmacy) {
+      return res.status(200).json({
+        success: false,
+        requireProfileSetup: true,
+        message: 'Pharmacy profile not found'
+      });
+    }
+
     const order = await Order.findOne({
       _id: req.params.id,
       pharmacyId: pharmacy._id
@@ -135,9 +151,9 @@ exports.getOrder = async (req, res) => {
 exports.updateOrderStatus = async (req, res) => {
   try {
     const { status, pharmacyNotes, estimatedTime, items } = req.body;
-    
+
     const order = await Order.findById(req.params.id);
-    
+
     if (!order) {
       return res.status(404).json({
         success: false,
@@ -182,27 +198,40 @@ exports.getInventory = async (req, res) => {
   try {
     const pharmacy = await Pharmacy.findOne({ userId: req.user.userId });
     const { status, search, page = 1, limit = 20 } = req.query;
-    
-    const query = { pharmacyId: pharmacy._id };
-    if (status) query.status = status;
-    if (search) {
-      query.medicineName = new RegExp(search, 'i');
+
+    if (!pharmacy) {
+      return res.status(200).json({
+        success: false,
+        requireProfileSetup: true,
+        message: 'Pharmacy profile not found'
+      });
     }
 
-    const inventory = await Inventory.find(query)
-      .populate('medicineId', 'name genericName category form')
-      .sort({ medicineName: 1 })
+    const query = { pharmacyId: pharmacy._id };
+
+    if (status === 'out_of_stock' || status === 'unavailable') {
+      query.isAvailable = false;
+    } else if (status === 'in_stock' || status === 'available') {
+      query.isAvailable = true;
+    }
+
+    if (search) {
+      query.medicine = new RegExp(search, 'i');
+    }
+
+    const inventory = await PharmacyInventory.find(query)
+      .sort({ medicine: 1 })
       .limit(limit * 1)
       .skip((page - 1) * limit);
 
-    const total = await Inventory.countDocuments(query);
+    const total = await PharmacyInventory.countDocuments(query);
 
-    // Get stock summary
-    const stockSummary = await Inventory.aggregate([
+    // Get stock summary mapping new boolean state to old dashboard expectations if necessary
+    const stockSummary = await PharmacyInventory.aggregate([
       { $match: { pharmacyId: pharmacy._id } },
       {
         $group: {
-          _id: '$status',
+          _id: { $cond: [{ $eq: ["$isAvailable", true] }, 'Available', 'Unavailable'] },
           count: { $sum: 1 }
         }
       }
@@ -232,8 +261,16 @@ exports.getInventory = async (req, res) => {
 exports.updateInventory = async (req, res) => {
   try {
     const pharmacy = await Pharmacy.findOne({ userId: req.user.userId });
-    
-    const inventory = await Inventory.findOneAndUpdate(
+
+    if (!pharmacy) {
+      return res.status(200).json({
+        success: false,
+        requireProfileSetup: true,
+        message: 'Pharmacy profile not found'
+      });
+    }
+
+    const inventory = await PharmacyInventory.findOneAndUpdate(
       { _id: req.params.id, pharmacyId: pharmacy._id },
       req.body,
       { new: true, runValidators: true }
@@ -263,13 +300,21 @@ exports.updateInventory = async (req, res) => {
 exports.addInventoryItem = async (req, res) => {
   try {
     const pharmacy = await Pharmacy.findOne({ userId: req.user.userId });
-    
+
+    if (!pharmacy) {
+      return res.status(200).json({
+        success: false,
+        requireProfileSetup: true,
+        message: 'Pharmacy profile not found'
+      });
+    }
+
     const inventoryData = {
       ...req.body,
       pharmacyId: pharmacy._id
     };
 
-    const inventory = await Inventory.create(inventoryData);
+    const inventory = await PharmacyInventory.create(inventoryData);
 
     res.status(201).json({
       success: true,
@@ -340,6 +385,14 @@ exports.getAnalytics = async (req, res) => {
   try {
     const pharmacy = await Pharmacy.findOne({ userId: req.user.userId });
     const { period = '30' } = req.query;
+
+    if (!pharmacy) {
+      return res.status(200).json({
+        success: false,
+        requireProfileSetup: true,
+        message: 'Pharmacy profile not found'
+      });
+    }
 
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - parseInt(period));

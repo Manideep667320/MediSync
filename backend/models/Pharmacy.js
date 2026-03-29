@@ -33,6 +33,17 @@ const pharmacySchema = new mongoose.Schema({
       required: true
     }
   },
+  latitude: {
+    type: Number,
+  },
+  longitude: {
+    type: Number,
+  },
+  inventory: [{
+    medicineName: { type: String, required: true },
+    stock: { type: Number, default: 0 },
+    price: { type: Number, default: 0 }
+  }],
   phone: {
     type: String,
     required: true

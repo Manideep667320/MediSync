@@ -83,8 +83,10 @@ exports.findNearbyPharmacies = async (req, res) => {
     }).limit(20);
 
     // Calculate distance and add availability info
+    const reqMedicines = medicines || [];
     const pharmaciesWithDetails = pharmacies.map(pharmacy => {
-      const [lon, lat] = pharmacy.location.coordinates;
+      const lon = pharmacy.location.coordinates[0];
+      const lat = pharmacy.location.coordinates[1];
       const distance = calculateDistance(
         latitude,
         longitude,
@@ -92,9 +94,32 @@ exports.findNearbyPharmacies = async (req, res) => {
         lon
       );
 
-      // Mock availability and pricing (in production, check actual inventory)
-      const allAvailable = Math.random() > 0.3;
-      const basePrice = 25 + Math.random() * 40;
+      // Check Real Inventory
+      let availableCount = 0;
+      let totalPrice = 0;
+      const pharmacyInventory = pharmacy.inventory || [];
+
+      const availabilityDetails = reqMedicines.map(reqMed => {
+        const inStockMatch = pharmacyInventory.find(inv =>
+          inv.medicineName.toLowerCase() === reqMed.medicineName.toLowerCase() &&
+          inv.stock >= (reqMed.quantity || 1)
+        );
+
+        if (inStockMatch) {
+          availableCount++;
+          totalPrice += inStockMatch.price * (reqMed.quantity || 1);
+          return { ...reqMed, available: true, price: inStockMatch.price };
+        }
+        return { ...reqMed, available: false, price: 0 };
+      });
+
+      let availabilityStatus = 'none_available';
+      if (reqMedicines.length > 0) {
+        if (availableCount === reqMedicines.length) availabilityStatus = 'all_available';
+        else if (availableCount > 0) availabilityStatus = 'partial_available';
+      } else {
+        availabilityStatus = 'all_available'; // If no specific meds requested, show nearby
+      }
 
       return {
         id: pharmacy._id,
@@ -105,18 +130,29 @@ exports.findNearbyPharmacies = async (req, res) => {
         rating: pharmacy.rating,
         features: pharmacy.features,
         deliveryAvailable: pharmacy.deliveryAvailable,
-        availabilityStatus: allAvailable ? 'all_available' : 'partial_available',
-        totalPrice: allAvailable ? parseFloat(basePrice.toFixed(2)) : 0,
-        estimatedTime: 20 + Math.floor(Math.random() * 20)
+        availabilityStatus,
+        availableMedicinesCount: availableCount,
+        totalRequestedMedicines: reqMedicines.length,
+        totalPrice: parseFloat(totalPrice.toFixed(2)),
+        estimatedTime: 20 + Math.floor(Math.random() * 20) // Simple distance/prep time calc
       };
     });
 
-    // Sort by distance
-    pharmaciesWithDetails.sort((a, b) => a.distance - b.distance);
+    // Filter out pharmacies with 0 matches if medicines were requested
+    const validPharmacies = reqMedicines.length > 0
+      ? pharmaciesWithDetails.filter(p => p.availableMedicinesCount > 0)
+      : pharmaciesWithDetails;
+
+    // Sort: All Available first, then by distance
+    validPharmacies.sort((a, b) => {
+      if (a.availabilityStatus === 'all_available' && b.availabilityStatus !== 'all_available') return -1;
+      if (b.availabilityStatus === 'all_available' && a.availabilityStatus !== 'all_available') return 1;
+      return a.distance - b.distance;
+    });
 
     res.json({
       success: true,
-      data: pharmaciesWithDetails
+      data: validPharmacies
     });
   } catch (error) {
     res.status(500).json({

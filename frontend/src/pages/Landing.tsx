@@ -267,11 +267,11 @@ export default function Landing() {
           </div>
           <div className="absolute top-40 right-20 w-24 h-24 animate-float-delayed opacity-100" style={{ transform: `translate(${mousePosition.x * 15}px, ${mousePosition.y * -20}px)` }}>
             <div className="w-full h-full rounded-full transform shadow-[0_0_40px_rgba(214,243,244,0.8)]"
-              style={{ background: 'linear-gradient(135deg, #F0FDFD, #D6F3F4)', transform: `rotateX(45deg) rotateY(-45deg)` }} />
+              style={{ background: 'linear-gradient(135deg, #F0FDFD, #74B3CE)', transform: `rotateX(45deg) rotateY(-45deg)` }} />
           </div>
           <div className="absolute bottom-40 left-1/4 w-20 h-20 animate-pulse-slow opacity-100" style={{ transform: `translate(${mousePosition.x * 10}px, ${mousePosition.y * 12}px)` }}>
             <div className="w-full h-full rounded-2xl transform shadow-[0_0_40px_rgba(214,243,244,0.6)]"
-              style={{ background: 'linear-gradient(135deg, #F0FDFD, #D6F3F4)', transform: `rotateX(-45deg) rotateY(45deg)` }} />
+              style={{ background: 'linear-gradient(135deg, #F0FDFD, #74B3CE)', transform: `rotateX(-45deg) rotateY(45deg)` }} />
           </div>
         </div>
 

@@ -3,12 +3,17 @@ const Doctor = require('../models/Doctor');
 const Patient = require('../models/Patient');
 const Order = require('../models/Order');
 const Pharmacy = require('../models/Pharmacy');
+const fs = require('fs');
+const { AssemblyAI } = require('assemblyai');
+const { parseText, extractVoiceContext } = require('../services/prescriptionParser');
+
+const assemblyai = new AssemblyAI({ apiKey: process.env.ASSEMBLYAI_API_KEY });
 
 // Get doctor dashboard statistics
 exports.getDashboard = async (req, res) => {
   try {
     const doctor = await Doctor.findOne({ userId: req.user.userId });
-    
+
     if (!doctor) {
       return res.status(404).json({
         success: false,
@@ -58,7 +63,7 @@ exports.getDashboard = async (req, res) => {
 exports.createPrescription = async (req, res) => {
   try {
     const doctor = await Doctor.findOne({ userId: req.user.userId });
-    
+
     if (!doctor) {
       return res.status(404).json({
         success: false,
@@ -102,10 +107,10 @@ exports.createPrescription = async (req, res) => {
 exports.getPrescriptions = async (req, res) => {
   try {
     const doctor = await Doctor.findOne({ userId: req.user.userId });
-    
+
     const { status, page = 1, limit = 10, search } = req.query;
     const query = { doctorId: doctor._id };
-    
+
     if (status) query.status = status;
     if (search) {
       query.$or = [
@@ -243,7 +248,7 @@ exports.sendToPharmacy = async (req, res) => {
 exports.getPatients = async (req, res) => {
   try {
     const doctor = await Doctor.findOne({ userId: req.user.userId });
-    
+
     // Get unique patients from prescriptions
     const prescriptions = await Prescription.find({ doctorId: doctor._id })
       .distinct('patientId');
@@ -328,6 +333,100 @@ exports.getAnalytics = async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message
+    });
+  }
+};
+
+// Process Voice Prescription
+exports.processVoicePrescription = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'No audio file provided' });
+    }
+
+    if (!process.env.ASSEMBLYAI_API_KEY) {
+      fs.unlinkSync(req.file.path);
+      return res.status(500).json({
+        success: false,
+        message: 'AssemblyAI API key is missing. Please check your .env file.'
+      });
+    }
+
+    // 1. Transcribe audio using AssemblyAI
+    const transcript = await assemblyai.transcripts.transcribe({
+      audio: req.file.path,
+      speech_models: ['universal-2']
+    });
+
+    const rawText = transcript.text || '';
+    fs.unlinkSync(req.file.path);
+
+    // 2. Extract patient context (name, age, diagnosis, symptoms) from speech
+    const context = extractVoiceContext(rawText);
+
+    // 3. Parse only the medicine-related text into structured items
+    const parsed = parseText(context.medicineText);
+    const medicines = (parsed.items || []).map(item => ({
+      medicine_name: item.medicine,
+      dosage: item.dosage,
+      frequency: item.frequency,
+      duration: item.duration,
+      instructions: item.instructions,
+      quantity: item.quantity || 1
+    }));
+
+    const structuredPrescription = {
+      patient_name: context.patient_name,
+      age: context.age,
+      diagnosis: context.diagnosis,
+      symptoms: context.symptoms,
+      medicines,
+      notes: rawText
+    };
+
+    res.json({
+      success: true,
+      data: {
+        raw_text: rawText,
+        prescription: structuredPrescription
+      }
+    });
+
+  } catch (error) {
+    if (req.file && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
+    console.error('Voice Prescription Error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error processing voice prescription'
+    });
+  }
+};
+
+// Parse prescription text into structured data (no API key required)
+exports.parsePrescriptionText = async (req, res) => {
+  try {
+    const { text } = req.body;
+
+    if (!text || typeof text !== 'string' || text.trim().length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Prescription text is required'
+      });
+    }
+
+    const result = parseText(text);
+
+    res.json({
+      success: result.success,
+      data: result
+    });
+  } catch (error) {
+    console.error('Parse Prescription Error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error parsing prescription text'
     });
   }
 };

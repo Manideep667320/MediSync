@@ -1,42 +1,33 @@
-import { useState } from 'react';
+import { useState, FormEvent } from 'react';
 import { useRouter } from '../components/Router';
 import { useAuth } from '../context/AuthContext';
-import { LogIn, AlertCircle, ArrowLeft } from 'lucide-react';
+import { AlertCircle, Mail, Lock, Eye, EyeOff, ArrowLeft, Shield } from 'lucide-react';
 
 export default function Login() {
   const { navigate } = useRouter();
   const { login } = useAuth();
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
-
     try {
       await login(email, password);
-
       const userStr = localStorage.getItem('user');
       if (userStr) {
         const user = JSON.parse(userStr);
         switch (user.role) {
-          case 'doctor':
-            navigate('/doctor/dashboard');
-            break;
-          case 'patient':
-            navigate('/patient/dashboard');
-            break;
-          case 'pharmacy':
-            navigate('/pharmacy/dashboard');
-            break;
-          case 'local':
-            navigate('/local-dashboard');
-            break;
-          default:
-            navigate('/');
+          case 'doctor': navigate('/doctor/dashboard'); break;
+          case 'patient': navigate('/patient/dashboard'); break;
+          case 'pharmacy': navigate('/pharmacy/dashboard'); break;
+          case 'local': navigate('/local-dashboard'); break;
+          default: navigate('/');
         }
       }
     } catch (err: any) {
@@ -47,107 +38,122 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4 py-8 relative overflow-hidden">
-      {/* Background decoration */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-20 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl animate-glow-pulse" />
-        <div className="absolute bottom-20 right-20 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-glow-pulse" style={{ animationDelay: '2s' }} />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-pink-500/5 rounded-full blur-3xl" />
-      </div>
+    <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center px-4">
+      <div className="w-full max-w-[420px]">
+        {/* Back link */}
+        <button
+          onClick={() => navigate('/access')}
+          className="flex items-center gap-2 text-slate-500 hover:text-[#508991] mb-8 text-sm font-medium transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Access Selection
+        </button>
 
-      <div className="relative z-10 w-full max-w-md">
-        <div className="glass-card p-8 shadow-2xl">
+        {/* Login Card */}
+        <div className="card-clean p-8">
           {/* Logo */}
-          <div className="flex items-center justify-center mb-6">
-            <div className="relative group">
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl blur-xl opacity-50 group-hover:opacity-75 transition-opacity duration-500" />
-              <div className="relative w-16 h-16 bg-gradient-to-br from-blue-400 via-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-2xl transform hover:scale-110 transition-transform duration-300">
-                <div className="text-white font-bold text-2xl">M+</div>
-              </div>
+          <div className="flex justify-center mb-6">
+            <div className="w-14 h-14 bg-[#508991] rounded-xl flex items-center justify-center">
+              <Shield className="w-7 h-7 text-white" />
             </div>
           </div>
 
-          <h2 className="text-3xl font-bold text-center mb-2 text-gradient font-display">Welcome Back</h2>
-          <p className="text-center text-slate-400 mb-8">Sign in to continue to MediSync</p>
+          <h1 className="text-2xl font-bold text-center text-slate-900 mb-1 font-display">
+            Welcome Back
+          </h1>
+          <p className="text-center text-slate-500 mb-8 text-sm">
+            Sign in to your MediSync account
+          </p>
 
+          {/* Error Message */}
           {error && (
-            <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-xl flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-red-300">{error}</p>
+            <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2.5">
+              <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-red-700">{error}</p>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleLogin} className="space-y-5">
+            {/* Email */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">
                 Email Address
               </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="w-full px-4 py-3 glass-input rounded-xl"
-                placeholder="you@example.com"
-              />
+              <div className="input-icon-wrapper">
+                <Mail className="w-4 h-4 icon-left" />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="input-healthcare"
+                  placeholder="you@example.com"
+                />
+              </div>
             </div>
 
+            {/* Password */}
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">
                 Password
               </label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="w-full px-4 py-3 glass-input rounded-xl"
-                placeholder="••••••••"
-              />
+              <div className="input-icon-wrapper">
+                <Lock className="w-4 h-4 icon-left" />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="input-healthcare pr-10"
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="icon-right"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
 
+            {/* Submit */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full btn-gradient py-3 rounded-xl text-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full btn-healthcare py-3 text-[15px] flex items-center justify-center gap-2"
             >
-              <span className="relative z-10 flex items-center gap-2">
-                {loading ? (
-                  <>
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    Signing in...
-                  </>
-                ) : (
-                  <>
-                    <LogIn className="w-5 h-5" />
-                    Sign In
-                  </>
-                )}
-              </span>
+              {loading ? (
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                'Sign In'
+              )}
             </button>
           </form>
 
-          <div className="mt-8 pt-6 border-t border-white/10">
-            <p className="text-center text-sm text-slate-400">
-              Demo Credentials
-            </p>
-            <div className="mt-3 space-y-2 text-xs text-slate-500">
-              <p><strong className="text-slate-400">Doctor:</strong> doctor@demo.com / demo123</p>
-              <p><strong className="text-slate-400">Patient:</strong> patient@demo.com / demo123</p>
-              <p><strong className="text-slate-400">Pharmacy:</strong> pharmacy@demo.com / demo123</p>
-            </div>
+          {/* Divider */}
+          <div className="flex items-center gap-3 my-6">
+            <div className="flex-1 h-px bg-slate-200" />
+            <span className="text-xs text-slate-400 font-medium">OR</span>
+            <div className="flex-1 h-px bg-slate-200" />
           </div>
 
-          <div className="mt-6 text-center">
-            <button
-              onClick={() => navigate('/access')}
-              className="text-sm text-blue-400 hover:text-blue-300 font-medium flex items-center gap-2 mx-auto transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Back to Access Selection
-            </button>
+          {/* Create Account */}
+          <button
+            onClick={() => navigate('/access')}
+            className="w-full btn-outline py-3 text-[15px]"
+          >
+            Create Account
+          </button>
+
+          {/* Demo credentials */}
+          <div className="mt-6 pt-5 border-t border-slate-100">
+            <p className="text-xs text-slate-400 text-center mb-2">Demo Credentials</p>
+            <div className="space-y-1 text-xs text-slate-500 text-center">
+              <p><span className="font-medium text-slate-600">Doctor:</span> doctor@demo.com / demo123</p>
+              <p><span className="font-medium text-slate-600">Patient:</span> patient@demo.com / demo123</p>
+              <p><span className="font-medium text-slate-600">Pharmacy:</span> pharmacy@demo.com / demo123</p>
+            </div>
           </div>
         </div>
       </div>

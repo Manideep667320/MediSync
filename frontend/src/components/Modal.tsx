@@ -28,13 +28,13 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md' }:
         className={`glass-card shadow-2xl ${sizeClasses[size]} w-full max-h-[90vh] overflow-hidden`}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between p-6 border-b border-white/10">
-          <h2 className="text-2xl font-bold text-white font-display">{title}</h2>
+        <div className="flex items-center justify-between p-6 border-b border-brand-900/10">
+          <h2 className="text-2xl font-bold text-brand-900 font-display">{title}</h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+            className="p-2 hover:bg-brand-900/10 rounded-lg transition-colors"
           >
-            <X className="w-6 h-6 text-slate-400" />
+            <X className="w-6 h-6 text-brand-700" />
           </button>
         </div>
         <div

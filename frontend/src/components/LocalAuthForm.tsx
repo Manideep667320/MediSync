@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, FormEvent } from 'react';
 import { useRouter } from './Router';
 import { useAuth } from '../context/AuthContext';
-import { LogIn, UserPlus, AlertCircle, User, Upload } from 'lucide-react';
+import { AlertCircle, User, Mail, Lock, Eye, EyeOff, Phone, X } from 'lucide-react';
 
 interface LocalAuthFormProps {
   onClose?: () => void;
@@ -10,48 +10,72 @@ interface LocalAuthFormProps {
 export default function LocalAuthForm({ onClose }: LocalAuthFormProps) {
   const { navigate } = useRouter();
   const { login, register } = useAuth();
+
   const [isLogin, setIsLogin] = useState(true);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     confirmPassword: '',
+    fullName: '',
     phone: '',
-    fullName: ''
   });
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
+    // Read role selected in hospital portal flow; default to 'local'
+    const selectedRole = (localStorage.getItem('selectedRole') as 'doctor' | 'patient' | 'pharmacy' | 'local') || 'local';
+
+    const getDashboardRoute = (role: string) => {
+      switch (role) {
+        case 'doctor': return '/doctor/dashboard';
+        case 'patient': return '/patient/dashboard';
+        case 'pharmacy': return '/pharmacy/dashboard';
+        default: return '/local-dashboard';
+      }
+    };
+
     try {
       if (isLogin) {
         await login(formData.email, formData.password);
-        navigate('/local-dashboard');
+        // After login, read the user's actual role from the response stored in localStorage
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+          const user = JSON.parse(userStr);
+          navigate(getDashboardRoute(user.role));
+        } else {
+          navigate(getDashboardRoute(selectedRole));
+        }
       } else {
         if (formData.password !== formData.confirmPassword) {
           setError('Passwords do not match');
           setLoading(false);
           return;
         }
-
         if (formData.password.length < 6) {
           setError('Password must be at least 6 characters');
           setLoading(false);
           return;
         }
-
         await register({
           email: formData.email,
           password: formData.password,
-          role: 'local',
+          role: selectedRole,
           phone: formData.phone,
-          fullName: formData.fullName
+          fullName: formData.fullName,
         });
-
-        navigate('/local-dashboard');
+        navigate(getDashboardRoute(selectedRole));
       }
     } catch (err: any) {
       setError(err.message || `${isLogin ? 'Login' : 'Registration'} failed. Please try again.`);
@@ -60,181 +84,117 @@ export default function LocalAuthForm({ onClose }: LocalAuthFormProps) {
     }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-  };
-
   const close = onClose || (() => navigate('/access'));
 
   return (
-    <>
-      <div className="flex items-center justify-center mb-6">
-        <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
-          <Upload className="w-8 h-8 text-white" />
-        </div>
+    <div className="card-clean p-8 w-[600px] min-h-[450px] flex flex-col">
+      {/* Close button */}
+      <div className="flex justify-end mb-2">
+        <button onClick={close} className="text-slate-400 hover:text-slate-600 transition-colors">
+          <X className="w-5 h-5" />
+        </button>
       </div>
 
-      <h2 className="text-3xl font-bold text-center text-white mb-2 font-display">
-        {isLogin ? 'Welcome Back' : 'Create Account'}
+      {/* Tab toggle */}
+      <div className="flex bg-slate-100 rounded-lg p-1 mb-6">
+        <button
+          onClick={() => { setIsLogin(true); setError(''); }}
+          className={`flex-1 py-2 text-sm font-semibold rounded-md transition-all ${isLogin ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+            }`}
+        >
+          Sign In
+        </button>
+        <button
+          onClick={() => { setIsLogin(false); setError(''); }}
+          className={`flex-1 py-2 text-sm font-semibold rounded-md transition-all ${!isLogin ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+            }`}
+        >
+          Create Account
+        </button>
+      </div>
+
+      <h2 className="text-xl font-bold text-slate-900 mb-1 font-display">
+        {isLogin ? 'Welcome Back' : 'Create Your Account'}
       </h2>
-      <p className="text-center text-slate-400 mb-8">
-        {isLogin ? 'Sign in as Local User' : 'Register as Local User'}
+      <p className="text-sm text-slate-500 mb-6">
+        {isLogin ? 'Sign in as a Local User' : 'Register as a Local User'}
       </p>
 
+      {/* Error */}
       {error && (
-        <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-xl flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
-          <p className="text-sm text-red-300">{error}</p>
+        <div className="mb-5 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2.5">
+          <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
+          <p className="text-sm text-red-700">{error}</p>
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Full Name (register only) */}
         {!isLogin && (
           <div>
-            <label htmlFor="fullName" className="block text-sm font-semibold text-slate-300 mb-2">
-              Full Name
-            </label>
-            <input
-              id="fullName"
-              name="fullName"
-              type="text"
-              value={formData.fullName}
-              onChange={handleInputChange}
-              required
-              className="w-full px-4 py-3 glass-input"
-              placeholder="John Doe"
-            />
+            <label className="block text-sm font-medium text-slate-700 mb-1.5">Full Name</label>
+            <div className="input-icon-wrapper">
+              <User className="w-4 h-4 icon-left" />
+              <input type="text" name="fullName" value={formData.fullName} onChange={handleInputChange} required className="input-healthcare" placeholder="John Doe" />
+            </div>
           </div>
         )}
 
+        {/* Email */}
         <div>
-          <label htmlFor="email" className="block text-sm font-semibold text-slate-300 mb-2">
-            Email Address
-          </label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            value={formData.email}
-            onChange={handleInputChange}
-            required
-            className="w-full px-4 py-3 glass-input"
-            placeholder="you@example.com"
-          />
+          <label className="block text-sm font-medium text-slate-700 mb-1.5">Email Address</label>
+          <div className="input-icon-wrapper">
+            <Mail className="w-4 h-4 icon-left" />
+            <input type="email" name="email" value={formData.email} onChange={handleInputChange} required className="input-healthcare" placeholder="you@example.com" />
+          </div>
         </div>
 
+        {/* Phone (register only) */}
         {!isLogin && (
           <div>
-            <label htmlFor="phone" className="block text-sm font-semibold text-slate-300 mb-2">
-              Phone Number
-            </label>
-            <input
-              id="phone"
-              name="phone"
-              type="tel"
-              value={formData.phone}
-              onChange={handleInputChange}
-              required
-              className="w-full px-4 py-3 glass-input"
-              placeholder="+91 98765 43210"
-            />
+            <label className="block text-sm font-medium text-slate-700 mb-1.5">Phone Number</label>
+            <div className="input-icon-wrapper">
+              <Phone className="w-4 h-4 icon-left" />
+              <input type="tel" name="phone" value={formData.phone} onChange={handleInputChange} required className="input-healthcare" placeholder="+91 98765 43210" />
+            </div>
           </div>
         )}
 
+        {/* Password */}
         <div>
-          <label htmlFor="password" className="block text-sm font-semibold text-slate-300 mb-2">
-            Password
-          </label>
-          <input
-            id="password"
-            name="password"
-            type="password"
-            value={formData.password}
-            onChange={handleInputChange}
-            required
-            className="w-full px-4 py-3 glass-input"
-            placeholder="••••••••"
-          />
+          <label className="block text-sm font-medium text-slate-700 mb-1.5">Password</label>
+          <div className="input-icon-wrapper">
+            <Lock className="w-4 h-4 icon-left" />
+            <input type={showPassword ? 'text' : 'password'} name="password" value={formData.password} onChange={handleInputChange} required className="input-healthcare pr-10" placeholder="••••••••" />
+            <button type="button" onClick={() => setShowPassword(!showPassword)} className="icon-right">
+              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+          </div>
         </div>
 
+        {/* Confirm Password (register only) */}
         {!isLogin && (
           <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-semibold text-slate-300 mb-2">
-              Confirm Password
-            </label>
-            <input
-              id="confirmPassword"
-              name="confirmPassword"
-              type="password"
-              value={formData.confirmPassword}
-              onChange={handleInputChange}
-              required
-              className="w-full px-4 py-3 glass-input"
-              placeholder="••••••••"
-            />
+            <label className="block text-sm font-medium text-slate-700 mb-1.5">Confirm Password</label>
+            <div className="input-icon-wrapper">
+              <Lock className="w-4 h-4 icon-left" />
+              <input type={showConfirmPassword ? 'text' : 'password'} name="confirmPassword" value={formData.confirmPassword} onChange={handleInputChange} required className="input-healthcare pr-10" placeholder="••••••••" />
+              <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="icon-right">
+                {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
           </div>
         )}
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full btn-gradient py-3 rounded-xl font-semibold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <span className="relative z-10 flex items-center gap-2">
-            {loading ? (
-              <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
-            ) : (
-              <>
-                {isLogin ? <LogIn className="w-5 h-5" /> : <UserPlus className="w-5 h-5" />}
-                {isLogin ? 'Sign In' : 'Create Account'}
-              </>
-            )}
-          </span>
+        {/* Submit */}
+        <button type="submit" disabled={loading} className="w-full btn-healthcare py-3 text-[15px] flex items-center justify-center gap-2 mt-2">
+          {loading ? (
+            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          ) : (
+            isLogin ? 'Sign In' : 'Create Account'
+          )}
         </button>
       </form>
-
-      <div className="mt-6 text-center">
-        <button
-          onClick={() => {
-            setIsLogin(!isLogin);
-            setError('');
-            setFormData({
-              email: '',
-              password: '',
-              confirmPassword: '',
-              phone: '',
-              fullName: ''
-            });
-          }}
-          className="text-blue-400 hover:text-blue-300 font-medium transition-colors"
-        >
-          {isLogin ? "Don't have an account? Sign Up" : 'Already have an account? Sign In'}
-        </button>
-      </div>
-
-      <div className="mt-8 pt-6 border-t border-white/10">
-        <div className="bg-blue-500/10 rounded-xl p-4 border border-blue-500/20">
-          <h3 className="font-semibold text-white mb-2 flex items-center gap-2">
-            <User className="w-4 h-4 text-blue-400" />
-            Local User Benefits:
-          </h3>
-          <ul className="text-sm text-slate-400 space-y-1">
-            <li>• Upload physical prescriptions</li>
-            <li>• Find nearby pharmacies</li>
-            <li>• Check medicine availability</li>
-            <li>• Save prescription history</li>
-          </ul>
-        </div>
-      </div>
-
-      <div className="mt-6 text-center">
-        <button onClick={close} className="text-sm text-slate-500 hover:text-slate-300 transition-colors">
-          Close
-        </button>
-      </div>
-    </>
+    </div>
   );
 }

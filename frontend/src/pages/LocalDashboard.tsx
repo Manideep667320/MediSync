@@ -166,17 +166,17 @@ export default function LocalDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 relative overflow-hidden">
+    <div className="min-h-screen bg-slate-50 relative overflow-hidden">
       {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 right-30 w-96 h-96 bg-blue-500/8 rounded-full blur-3xl animate-glow-pulse" />
+        <div className="absolute top-20 right-30 w-96 h-96 bg-brand-500/8 rounded-full blur-3xl animate-glow-pulse" />
         <div className="absolute bottom-20 left-20 w-72 h-72 bg-purple-500/8 rounded-full blur-3xl animate-glow-pulse" style={{ animationDelay: '2s' }} />
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
         <button
           onClick={() => navigate('/access')}
-          className="flex items-center gap-2 text-slate-400 hover:text-blue-400 mb-6 transition-colors"
+          className="flex items-center gap-2 text-brand-700 hover:text-brand-700 mb-6 transition-colors"
         >
           <ArrowLeft className="w-5 h-5" />
           Back
@@ -184,21 +184,21 @@ export default function LocalDashboard() {
 
         <div className="mb-12 text-center">
           <h1 className="text-4xl font-bold mb-4 font-display">
-            <span className="text-white">Upload Your </span>
+            <span className="text-brand-900">Upload Your </span>
             <span className="text-gradient">Prescription</span>
           </h1>
-          <p className="text-lg text-slate-400">Convert your physical prescription to digital format</p>
+          <p className="text-lg text-brand-700">Convert your physical prescription to digital format</p>
         </div>
 
         {!prescription && (
           <div className="max-w-2xl mx-auto">
-            <div className="glass-card p-12 border-2 border-dashed border-white/10 hover:border-blue-500/30 transition-colors duration-300">
+            <div className="glass-card p-12 border-2 border-dashed border-brand-900/10 hover:border-brand-500/30 transition-colors duration-300">
               <div className="text-center">
-                <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <Upload className="w-10 h-10 text-white" />
+                <div className="w-20 h-20 bg-gradient-to-br from-brand-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <Upload className="w-10 h-10 text-brand-900" />
                 </div>
-                <h3 className="text-xl font-semibold mb-2 text-white font-display">Upload Prescription Image</h3>
-                <p className="text-slate-400 mb-6">
+                <h3 className="text-xl font-semibold mb-2 text-brand-900 font-display">Upload Prescription Image</h3>
+                <p className="text-brand-700 mb-6">
                   Support for PNG, JPG, JPEG, and PDF files up to 10MB
                 </p>
 
@@ -221,7 +221,7 @@ export default function LocalDashboard() {
                   <button
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isProcessing}
-                    className="flex items-center justify-center gap-2 bg-white/5 text-slate-300 py-3 px-6 rounded-xl font-semibold hover:bg-white/10 border border-white/10 transition-colors disabled:opacity-50"
+                    className="flex items-center justify-center gap-2 bg-brand-900/5 text-brand-800 py-3 px-6 rounded-xl font-semibold hover:bg-brand-900/10 border border-brand-900/10 transition-colors disabled:opacity-50"
                   >
                     <Camera className="w-5 h-5" />
                     Take Photo
@@ -230,8 +230,8 @@ export default function LocalDashboard() {
 
                 {isProcessing && (
                   <div className="mt-6">
-                    <div className="text-blue-400 animate-pulse">Processing your prescription...</div>
-                    <div className="mt-2 text-sm text-slate-500">This usually takes 5-10 seconds</div>
+                    <div className="text-brand-700 animate-pulse">Processing your prescription...</div>
+                    <div className="mt-2 text-sm text-brand-500">This usually takes 5-10 seconds</div>
                   </div>
                 )}
               </div>
@@ -242,36 +242,36 @@ export default function LocalDashboard() {
         {prescription && !showPharmacies && (
           <div className="max-w-4xl mx-auto">
             <div className="glass-card p-8 mb-6">
-              <h2 className="text-2xl font-bold mb-6 text-white flex items-center gap-2 font-display">
+              <h2 className="text-2xl font-bold mb-6 text-brand-900 flex items-center gap-2 font-display">
                 <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-green-600 rounded-lg flex items-center justify-center">
-                  <Check className="w-5 h-5 text-white" />
+                  <Check className="w-5 h-5 text-brand-900" />
                 </div>
                 Digital Prescription
               </h2>
 
               <div className="space-y-6">
-                <div className="grid md:grid-cols-3 gap-4 pb-6 border-b border-white/10">
+                <div className="grid md:grid-cols-3 gap-4 pb-6 border-b border-brand-900/10">
                   <div>
-                    <div className="text-sm text-slate-500 mb-1">Patient Name</div>
-                    <div className="font-semibold text-white">{prescription.patientName}</div>
+                    <div className="text-sm text-brand-500 mb-1">Patient Name</div>
+                    <div className="font-semibold text-brand-900">{prescription.patientName}</div>
                   </div>
                   <div>
-                    <div className="text-sm text-slate-500 mb-1">Age / Gender</div>
-                    <div className="font-semibold text-white">{prescription.age} / {prescription.gender}</div>
+                    <div className="text-sm text-brand-500 mb-1">Age / Gender</div>
+                    <div className="font-semibold text-brand-900">{prescription.age} / {prescription.gender}</div>
                   </div>
                   <div>
-                    <div className="text-sm text-slate-500 mb-1">Date</div>
-                    <div className="font-semibold text-white">{prescription.date}</div>
+                    <div className="text-sm text-brand-500 mb-1">Date</div>
+                    <div className="font-semibold text-brand-900">{prescription.date}</div>
                   </div>
                 </div>
 
-                <div className="pb-6 border-b border-white/10">
-                  <div className="text-sm text-slate-500 mb-2">Diagnosis</div>
-                  <div className="text-lg font-semibold text-white">{prescription.diagnosis}</div>
+                <div className="pb-6 border-b border-brand-900/10">
+                  <div className="text-sm text-brand-500 mb-2">Diagnosis</div>
+                  <div className="text-lg font-semibold text-brand-900">{prescription.diagnosis}</div>
                 </div>
 
                 <div>
-                  <div className="text-lg font-semibold mb-4 text-white font-display">Medicines</div>
+                  <div className="text-lg font-semibold mb-4 text-brand-900 font-display">Medicines</div>
                   <div className="glass-table overflow-x-auto">
                     <table className="w-full">
                       <thead>
@@ -286,7 +286,7 @@ export default function LocalDashboard() {
                       <tbody>
                         {prescription.medicines.map((medicine, index) => (
                           <tr key={index}>
-                            <td className="px-4 py-3 font-medium text-white">{medicine.name}</td>
+                            <td className="px-4 py-3 font-medium text-brand-900">{medicine.name}</td>
                             <td className="px-4 py-3">{medicine.dosage}</td>
                             <td className="px-4 py-3">{medicine.frequency}</td>
                             <td className="px-4 py-3">{medicine.duration}</td>
@@ -299,20 +299,20 @@ export default function LocalDashboard() {
                 </div>
 
                 {prescription.doctorNotes && (
-                  <div className="bg-blue-500/10 p-4 rounded-xl border border-blue-500/20">
-                    <div className="text-sm font-semibold text-blue-400 mb-1">Doctor's Notes</div>
-                    <div className="text-slate-300">{prescription.doctorNotes}</div>
+                  <div className="bg-brand-500/10 p-4 rounded-xl border border-brand-500/20">
+                    <div className="text-sm font-semibold text-brand-700 mb-1">Doctor's Notes</div>
+                    <div className="text-brand-800">{prescription.doctorNotes}</div>
                   </div>
                 )}
               </div>
             </div>
 
             <div className="flex gap-4">
-              <button className="flex items-center gap-2 px-6 py-3 bg-white/5 text-slate-300 rounded-xl font-semibold hover:bg-white/10 border border-white/10 transition-colors">
+              <button className="flex items-center gap-2 px-6 py-3 bg-brand-900/5 text-brand-800 rounded-xl font-semibold hover:bg-brand-900/10 border border-brand-900/10 transition-colors">
                 <Download className="w-5 h-5" />
                 Download PDF
               </button>
-              <button className="flex items-center gap-2 px-6 py-3 bg-white/5 text-slate-300 rounded-xl font-semibold hover:bg-white/10 border border-white/10 transition-colors">
+              <button className="flex items-center gap-2 px-6 py-3 bg-brand-900/5 text-brand-800 rounded-xl font-semibold hover:bg-brand-900/10 border border-brand-900/10 transition-colors">
                 <Edit className="w-5 h-5" />
                 Edit Information
               </button>
@@ -333,26 +333,26 @@ export default function LocalDashboard() {
           <div className="max-w-6xl mx-auto">
             <div className="mb-8">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-3xl font-bold text-white font-display">Nearby Pharmacies</h2>
+                <h2 className="text-3xl font-bold text-brand-900 font-display">Nearby Pharmacies</h2>
                 <button
                   onClick={() => setShowPharmacies(false)}
-                  className="text-blue-400 hover:text-blue-300 font-medium text-sm transition-colors"
+                  className="text-brand-700 hover:text-blue-300 font-medium text-sm transition-colors"
                 >
                   ← Back to Prescription
                 </button>
               </div>
-              <p className="text-slate-400 mb-4">
-                Showing <span className="font-semibold text-white">{pharmacies.length} pharmacies</span> within <span className="font-semibold text-blue-400">{selectedRadius} km</span> that stock your medicines
+              <p className="text-brand-700 mb-4">
+                Showing <span className="font-semibold text-brand-900">{pharmacies.length} pharmacies</span> within <span className="font-semibold text-brand-700">{selectedRadius} km</span> that stock your medicines
               </p>
               <div className="flex gap-3 items-center flex-wrap">
-                <span className="text-slate-400 font-medium">Search radius:</span>
+                <span className="text-brand-700 font-medium">Search radius:</span>
                 {[1, 3, 5, 10].map((radius) => (
                   <button
                     key={radius}
                     onClick={() => handleRadiusChange(radius)}
                     className={`px-5 py-2 rounded-xl font-semibold transition-all duration-300 ${selectedRadius === radius
-                      ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-glow-blue'
-                      : 'bg-white/5 text-slate-400 hover:bg-white/10 border border-white/10'
+                      ? 'bg-gradient-to-r from-brand-500 to-purple-600 text-brand-900 shadow-sm'
+                      : 'bg-brand-900/5 text-brand-700 hover:bg-brand-900/10 border border-brand-900/10'
                       }`}
                   >
                     {radius} km
@@ -363,14 +363,14 @@ export default function LocalDashboard() {
 
             {isSearching ? (
               <div className="flex flex-col items-center justify-center py-24 gap-4">
-                <div className="w-12 h-12 border-2 border-blue-500/30 border-t-blue-400 rounded-full animate-spin" />
-                <p className="text-slate-400 font-medium">Finding pharmacies near you…</p>
+                <div className="w-12 h-12 border-2 border-brand-500/30 border-t-brand-300 rounded-full animate-spin" />
+                <p className="text-brand-700 font-medium">Finding pharmacies near you…</p>
               </div>
             ) : searchError ? (
               <div className="flex flex-col items-center justify-center py-24 gap-3 text-center">
                 <AlertCircle className="w-12 h-12 text-red-400/50" />
-                <p className="text-white font-semibold text-lg">Could not load pharmacies</p>
-                <p className="text-slate-400 text-sm max-w-sm">{searchError}</p>
+                <p className="text-brand-900 font-semibold text-lg">Could not load pharmacies</p>
+                <p className="text-brand-700 text-sm max-w-sm">{searchError}</p>
                 <button
                   onClick={() => fetchPharmacies(selectedRadius)}
                   className="mt-2 btn-gradient px-5 py-2 rounded-xl font-semibold"
@@ -388,14 +388,14 @@ export default function LocalDashboard() {
                     <div className="flex justify-between items-start mb-4">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-1">
-                          <h3 className="text-xl font-bold text-white font-display">{pharmacy.name}</h3>
+                          <h3 className="text-xl font-bold text-brand-900 font-display">{pharmacy.name}</h3>
                           {pharmacy.deliveryAvailable && (
-                            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-brand-500/20 text-brand-700 border border-brand-500/30">
                               Home Delivery
                             </span>
                           )}
                         </div>
-                        <p className="text-slate-400 text-sm mb-3 flex items-center gap-1">
+                        <p className="text-brand-700 text-sm mb-3 flex items-center gap-1">
                           <MapPin className="w-3.5 h-3.5" />
                           {pharmacy.address.street}, {pharmacy.address.city}
                         </p>
@@ -403,7 +403,7 @@ export default function LocalDashboard() {
                           {pharmacy.features.map((feature, index) => (
                             <span
                               key={index}
-                              className="px-3 py-1 bg-blue-500/10 text-blue-400 text-xs font-medium rounded-full border border-blue-500/20"
+                              className="px-3 py-1 bg-brand-500/10 text-brand-700 text-xs font-medium rounded-full border border-brand-500/20"
                             >
                               {feature}
                             </span>
@@ -413,16 +413,16 @@ export default function LocalDashboard() {
                       <div className="text-right ml-6 flex-shrink-0">
                         <div className="flex items-center gap-1 justify-end mb-1">
                           <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                          <span className="font-bold text-white text-lg">{pharmacy.rating}</span>
+                          <span className="font-bold text-brand-900 text-lg">{pharmacy.rating}</span>
                         </div>
-                        <div className="flex items-center gap-1 text-slate-400 text-sm justify-end">
-                          <Navigation className="w-3.5 h-3.5 text-blue-400" />
-                          <span className="font-semibold text-blue-400 text-lg">{pharmacy.distance} km</span>
+                        <div className="flex items-center gap-1 text-brand-700 text-sm justify-end">
+                          <Navigation className="w-3.5 h-3.5 text-brand-700" />
+                          <span className="font-semibold text-brand-700 text-lg">{pharmacy.distance} km</span>
                         </div>
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between pt-4 border-t border-white/10">
+                    <div className="flex items-center justify-between pt-4 border-t border-brand-900/10">
                       <div className="flex items-center gap-4 flex-wrap">
                         <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold ${pharmacy.availabilityStatus === 'all_available'
                           ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
@@ -431,11 +431,11 @@ export default function LocalDashboard() {
                           <Package className="w-4 h-4" />
                           {pharmacy.availabilityStatus === 'all_available' ? 'All medicines in stock' : 'Partial availability'}
                         </div>
-                        <div className="flex items-center gap-1.5 text-slate-400">
+                        <div className="flex items-center gap-1.5 text-brand-700">
                           <Clock className="w-4 h-4" />
                           <span className="text-sm">Ready ~{pharmacy.estimatedTime} min</span>
                         </div>
-                        <div className="flex items-center gap-1.5 text-slate-400">
+                        <div className="flex items-center gap-1.5 text-brand-700">
                           <Phone className="w-4 h-4" />
                           <span className="text-sm">{pharmacy.phone}</span>
                         </div>
@@ -443,11 +443,11 @@ export default function LocalDashboard() {
                       <div className="flex items-center gap-4 ml-4">
                         {pharmacy.availabilityStatus === 'all_available' && (
                           <div className="text-right">
-                            <div className="text-xs text-slate-500">Est. Total</div>
+                            <div className="text-xs text-brand-500">Est. Total</div>
                             <div className="text-2xl font-bold text-emerald-400">${pharmacy.totalPrice.toFixed(2)}</div>
                           </div>
                         )}
-                        <button className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl font-semibold hover:shadow-glow-blue transition-all duration-300 flex items-center gap-2">
+                        <button className="px-6 py-3 bg-gradient-to-r from-brand-500 to-purple-600 text-brand-900 rounded-xl font-semibold hover:shadow-sm transition-all duration-300 flex items-center gap-2">
                           <MapPin className="w-4 h-4" />
                           Reserve &amp; Navigate
                         </button>

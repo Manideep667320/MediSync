@@ -13,7 +13,7 @@ export const Background3D = () => {
       newParticles.push({
         x: Math.random() * 100,
         y: Math.random() * 100,
-        size: Math.random() * 20 + 15,
+        size: Math.random() * 5 + 3,
         speed: Math.random() * 0.5 + 0.1,
       });
     }
@@ -64,8 +64,8 @@ export const Background3D = () => {
 
         .bg3d-grid {
           background-image:
-            linear-gradient(rgba(80, 137, 145, 0.3) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(80, 137, 145, 0.3) 1px, transparent 1px);
+            linear-gradient(rgba(80, 137, 145, 0.15) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(80, 137, 145, 0.15) 1px, transparent 1px);
           background-size: 50px 50px;
           transform: rotateX(60deg) translateZ(-100px);
           transform-style: preserve-3d;
@@ -75,14 +75,15 @@ export const Background3D = () => {
         {particles.map((particle, i) => (
           <div
             key={i}
-            className="absolute rounded-full bg-brand-900"
+            className="absolute rounded-full"
             style={{
               left: `${particle.x}%`,
               top: `${particle.y}%`,
               width: `${particle.size}px`,
               height: `${particle.size}px`,
-              opacity: 0.4,
-              boxShadow: '0 0 10px rgba(13, 27, 42, 0.5)',
+              background: i % 3 === 0 ? '#74B3CE' : i % 3 === 1 ? '#508991' : '#004346',
+              opacity: 0.25,
+              boxShadow: '0 0 10px rgba(116, 179, 206, 0.5)',
               transition: 'top 0.05s linear',
             }}
           />

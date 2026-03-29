@@ -1,20 +1,19 @@
 import { useRouter } from '../components/Router';
-import Modal from '../components/Modal';
 import LocalAuthForm from '../components/LocalAuthForm';
 
 export default function LocalAuth() {
   const { navigate } = useRouter();
+  const close = () => navigate('/access');
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50">
-      <Modal
-        isOpen={true}
-        onClose={() => navigate('/access')}
-        title="Local User Login / Registration"
-        size="sm"
-      >
-        <LocalAuthForm onClose={() => navigate('/access')} />
-      </Modal>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40"
+      style={{ backdropFilter: 'blur(4px)' }}
+      onClick={close}
+    >
+      <div onClick={(e) => e.stopPropagation()}>
+        <LocalAuthForm onClose={close} />
+      </div>
     </div>
   );
 }
