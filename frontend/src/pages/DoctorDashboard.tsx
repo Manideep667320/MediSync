@@ -182,7 +182,7 @@ export default function DoctorDashboard() {
       <div className="min-h-screen bg-slate-50 flex w-full flex-col md:flex-row">
         {/* Sidebar */}
         <Sidebar collapsible="icon" className="glass-sidebar border-r-0">
-          <SidebarHeader className="p-6 pb-2">
+          <SidebarHeader>
             <div className="flex items-center justify-between group-data-[collapsible=icon]:hidden">
               <h2 className="text-2xl font-bold text-gradient font-display">MediSync</h2>
               <SidebarTrigger />
@@ -193,7 +193,7 @@ export default function DoctorDashboard() {
             <p className="text-brand-700/70 text-sm group-data-[collapsible=icon]:hidden">Doctor Portal</p>
           </SidebarHeader>
 
-          <SidebarContent className="px-4">
+          <SidebarContent>
             <SidebarGroup>
               <SidebarGroupContent>
                 <SidebarMenu>
@@ -209,13 +209,13 @@ export default function DoctorDashboard() {
                           }
                         }}
                         isActive={activeTab === item.id}
-                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${activeTab === item.id
+                        className={activeTab === item.id
                           ? 'bg-gradient-to-r from-brand-500/20 to-purple-500/20 text-brand-900 border border-brand-500/30'
                           : 'text-brand-700 hover:text-brand-900 hover:bg-brand-900/5'
-                          }`}
-                        style={{ height: 'auto' }}
+                        }
+                        tooltip={item.label}
                       >
-                        <item.icon className="w-5 h-5 flex-shrink-0" />
+                        <item.icon />
                         <span>{item.label}</span>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -225,7 +225,7 @@ export default function DoctorDashboard() {
             </SidebarGroup>
           </SidebarContent>
 
-          <SidebarFooter className="p-6 pt-2 border-t border-brand-900/10 group-data-[collapsible=icon]:p-2">
+          <SidebarFooter className="border-t border-brand-900/10 p-4">
             <div className="flex items-center gap-3 mb-4 group-data-[collapsible=icon]:justify-center">
               <div className="w-10 h-10 bg-gradient-to-br from-brand-500 to-purple-600 rounded-full flex items-center justify-center text-brand-900 font-semibold text-sm flex-shrink-0">
                 DS

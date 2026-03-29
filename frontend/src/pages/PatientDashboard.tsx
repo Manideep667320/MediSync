@@ -78,7 +78,7 @@ export default function PatientDashboard() {
     <SidebarProvider>
       <div className="min-h-screen bg-slate-50 flex w-full flex-col md:flex-row">
         <Sidebar collapsible="icon" className="glass-sidebar border-r-0">
-          <SidebarHeader className="p-6 pb-2">
+          <SidebarHeader>
             <div className="flex items-center justify-between group-data-[collapsible=icon]:hidden">
               <h2 className="text-2xl font-bold text-gradient font-display">MediSync</h2>
               <SidebarTrigger />
@@ -89,7 +89,7 @@ export default function PatientDashboard() {
             <p className="text-emerald-400/70 text-sm group-data-[collapsible=icon]:hidden">Patient Portal</p>
           </SidebarHeader>
 
-          <SidebarContent className="px-4">
+          <SidebarContent>
             <SidebarGroup>
               <SidebarGroupContent>
                 <SidebarMenu>
@@ -101,13 +101,13 @@ export default function PatientDashboard() {
                           setSelectedPrescription(null);
                         }}
                         isActive={activeTab === item.id}
-                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${activeTab === item.id
-                          ? 'bg-gradient-to-r from-emerald-500/20 to-green-500/20 text-brand-900 border border-emerald-500/30'
+                        className={activeTab === item.id
+                          ? 'bg-gradient-to-r from-emerald-500/20 to-green-500/20 text-brand-900 border border-emerald-500/30 font-medium'
                           : 'text-brand-700 hover:text-brand-900 hover:bg-brand-900/5'
-                          }`}
-                        style={{ height: 'auto' }}
+                        }
+                        tooltip={item.label}
                       >
-                        <item.icon className="w-5 h-5 flex-shrink-0" />
+                        <item.icon />
                         <span>{item.label}</span>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -117,7 +117,7 @@ export default function PatientDashboard() {
             </SidebarGroup>
           </SidebarContent>
 
-          <SidebarFooter className="p-6 pt-2 border-t border-brand-900/10 group-data-[collapsible=icon]:p-2">
+          <SidebarFooter className="border-t border-brand-900/10 p-4">
             <div className="flex items-center gap-3 mb-4 group-data-[collapsible=icon]:justify-center">
               <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-green-600 rounded-full flex items-center justify-center text-brand-900 font-semibold text-sm flex-shrink-0">
                 JD
