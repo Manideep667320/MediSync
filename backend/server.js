@@ -49,15 +49,22 @@ app.use('/uploads', express.static(staticUploadsDir));
 app.use('/api', apiLimiter);
 
 // MongoDB connection
-mongoose
-  .connect(process.env.MONGO_URI || 'mongodb://localhost:27017/medisync')
-  .then(() => {
+const connectDB = async () => {
+  if (mongoose.connection.readyState >= 1) return;
+  
+  try {
+    await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/medisync');
     console.log('✅ MongoDB Connected Successfully');
-  })
-  .catch((err) => {
+  } catch (err) {
     console.error('❌ MongoDB Connection Error:', err.message);
-    process.exit(1);
-  });
+    // Don't exit process in serverless, just throw so Vercel can handle the retry
+    if (!serverlessEnv) process.exit(1);
+    throw err;
+  }
+};
+
+// Connect to database
+connectDB();
 
 // Health check endpoint
 app.get('/', (req, res) => {

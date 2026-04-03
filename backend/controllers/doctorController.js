@@ -345,7 +345,6 @@ exports.processVoicePrescription = async (req, res) => {
     }
 
     if (!process.env.ASSEMBLYAI_API_KEY) {
-      fs.unlinkSync(req.file.path);
       return res.status(500).json({
         success: false,
         message: 'AssemblyAI API key is missing. Please check your .env file.'
@@ -354,12 +353,11 @@ exports.processVoicePrescription = async (req, res) => {
 
     // 1. Transcribe audio using AssemblyAI
     const transcript = await assemblyai.transcripts.transcribe({
-      audio: req.file.path,
+      audio: req.file.buffer,
       speech_models: ['universal-2']
     });
 
     const rawText = transcript.text || '';
-    fs.unlinkSync(req.file.path);
 
     // 2. Extract patient context (name, age, diagnosis, symptoms) from speech
     const context = extractVoiceContext(rawText);
@@ -393,9 +391,6 @@ exports.processVoicePrescription = async (req, res) => {
     });
 
   } catch (error) {
-    if (req.file && fs.existsSync(req.file.path)) {
-      fs.unlinkSync(req.file.path);
-    }
     console.error('Voice Prescription Error:', error);
     res.status(500).json({
       success: false,

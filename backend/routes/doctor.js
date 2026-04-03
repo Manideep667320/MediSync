@@ -4,7 +4,8 @@ const doctorController = require('../controllers/doctorController');
 const { authenticate } = require('../middleware/auth');
 const { requireDoctor } = require('../middleware/roleCheck');
 const multer = require('multer');
-const upload = multer({ dest: 'uploads/' });
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
 
 // All routes require authentication and doctor role
 router.use(authenticate, requireDoctor);
