@@ -3,7 +3,7 @@ import {
   Upload, Camera, ArrowLeft, Download, Edit, MapPin, Check, Package, Clock, Star,
   Phone, Navigation, AlertCircle, LayoutDashboard, Pill, GraduationCap, History,
   Settings, HelpCircle, LogOut, Bell, Search, Plus, ChevronDown, Sun, Moon, CloudSun, Eye, FileText, ChevronRight,
-  Map, CheckCircle, Car, Truck, Syringe, Filter, List, FlaskConical, Store, FileSpreadsheet
+  Map, CheckCircle, Car, Truck, Syringe, Filter, List, FlaskConical, Store, FileSpreadsheet, User
 } from 'lucide-react';
 import {
   Sidebar,
@@ -299,16 +299,6 @@ export default function LocalDashboard() {
           </SidebarContent>
 
           <SidebarFooter className="p-4 border-t border-brand-900/10">
-            <div className="flex items-center gap-3 mb-6 group-data-[collapsible=icon]:hidden px-2">
-              <div className="w-10 h-10 rounded-full bg-brand-500/20 flex items-center justify-center text-brand-900 font-bold border border-brand-500/30">
-                A
-              </div>
-              <div className="flex-1 overflow-hidden">
-                <p className="text-sm font-bold text-brand-900 truncate">Welcome Back</p>
-                <p className="text-[10px] text-brand-500 truncate">ID: 8821</p>
-              </div>
-            </div>
-            
             <div className="flex items-center justify-center gap-1 group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:gap-4">
               <SidebarMenuButton 
                 tooltip="Settings" 
@@ -344,6 +334,11 @@ export default function LocalDashboard() {
               <button className="p-2 text-brand-700 hover:bg-brand-500/10 rounded-full transition-colors relative">
                 <Bell className="w-5 h-5" />
                 <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
+              </button>
+              <button className="p-2 text-brand-700 hover:bg-brand-500/10 rounded-full transition-colors group relative">
+                <div className="w-8 h-8 rounded-full bg-brand-500/20 flex items-center justify-center text-brand-900 font-bold border border-brand-500/30">
+                  <User className="w-4 h-4" />
+                </div>
               </button>
               <SidebarTrigger className="md:hidden" />
             </div>
