@@ -48,17 +48,14 @@ export default function LocalAuthForm({ onClose }: LocalAuthFormProps) {
 
     try {
       if (isLogin) {
-        await login(formData.email, formData.password);
-        // After login, read the user's actual role from the response stored in localStorage
-        const userStr = localStorage.getItem('user');
-        if (userStr) {
-          const user = JSON.parse(userStr);
-          navigate(getDashboardRoute(user.role));
-        } else {
-          navigate(getDashboardRoute(selectedRole));
-        }
+        const response = await login(formData.email, formData.password);
+        // Prioritize actual role from user object if it exists directly on response
+        // Note: the login context already sets setUser() with response.data.user
+        const user = response?.data?.user;
+        const roleToUse = user?.role || selectedRole;
+        navigate(getDashboardRoute(roleToUse));
       } else {
-        if (formData.password !== formData.confirmPassword) {
+        if (formData.confirmPassword && (formData.password !== formData.confirmPassword)) {
           setError('Passwords do not match');
           setLoading(false);
           return;
@@ -68,14 +65,16 @@ export default function LocalAuthForm({ onClose }: LocalAuthFormProps) {
           setLoading(false);
           return;
         }
-        await register({
+        const response = await register({
           email: formData.email,
           password: formData.password,
           role: selectedRole,
           phone: formData.phone,
           fullName: formData.fullName,
         });
-        navigate(getDashboardRoute(selectedRole));
+        const user = response?.data?.user;
+        const roleToUse = user?.role || selectedRole;
+        navigate(getDashboardRoute(roleToUse));
       }
     } catch (err: any) {
       setError(err.message || `${isLogin ? 'Login' : 'Registration'} failed. Please try again.`);

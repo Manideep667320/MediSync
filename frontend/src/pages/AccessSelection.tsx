@@ -21,7 +21,10 @@ export default function AccessSelection() {
         'No hospital affiliation needed',
       ],
       buttonText: 'Login / Register',
-      action: () => setLocalOpen(true),
+      action: () => {
+        localStorage.setItem('selectedRole', 'local');
+        setLocalOpen(true);
+      },
       badge: 'Login Required',
       badgeColor: 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30',
       gradient: 'from-brand-500 to-brand-300',

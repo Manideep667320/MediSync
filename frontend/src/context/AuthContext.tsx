@@ -23,8 +23,8 @@ interface AuthContextType {
   user: User | null;
   profile: any | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (data: RegisterData) => Promise<void>;
+  login: (email: string, password: string) => Promise<any>;
+  register: (data: RegisterData) => Promise<any>;
   logout: () => void;
   isAuthenticated: boolean;
 }
@@ -64,6 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await authService.login({ email, password });
       setUser(response.data.user);
       setProfile(response.data.profile);
+      return response;
     } catch (error) {
       throw error;
     }
@@ -74,6 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await authService.register(data);
       setUser(response.data.user);
       setProfile(response.data.profile);
+      return response;
     } catch (error) {
       throw error;
     }
