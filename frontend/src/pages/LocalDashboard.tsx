@@ -298,8 +298,8 @@ export default function LocalDashboard() {
             </SidebarGroup>
           </SidebarContent>
 
-          <SidebarFooter className="p-6 border-t border-brand-900/10">
-            <div className="flex items-center gap-3 mb-6 group-data-[collapsible=icon]:hidden">
+          <SidebarFooter className="p-4 border-t border-brand-900/10">
+            <div className="flex items-center gap-3 mb-6 group-data-[collapsible=icon]:hidden px-2">
               <div className="w-10 h-10 rounded-full bg-brand-500/20 flex items-center justify-center text-brand-900 font-bold border border-brand-500/30">
                 A
               </div>
@@ -308,26 +308,30 @@ export default function LocalDashboard() {
                 <p className="text-[10px] text-brand-500 truncate">ID: 8821</p>
               </div>
             </div>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton className="text-brand-700">
-                  <Settings className="w-4 h-4" />
-                  <span>Settings</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton className="text-brand-700">
-                  <HelpCircle className="w-4 h-4" />
-                  <span>Support</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton onClick={handleLogout} className="text-red-500 hover:text-red-400">
-                  <LogOut className="w-4 h-4" />
-                  <span>Sign Out</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
+            
+            <div className="flex items-center justify-center gap-1 group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:gap-4">
+              <SidebarMenuButton 
+                tooltip="Settings" 
+                className="w-10 h-10 rounded-xl flex items-center justify-center text-brand-700 hover:bg-brand-500/10 transition-all active:scale-95"
+              >
+                <Settings className="w-5 h-5" />
+              </SidebarMenuButton>
+              
+              <SidebarMenuButton 
+                tooltip="Support" 
+                className="w-10 h-10 rounded-xl flex items-center justify-center text-brand-700 hover:bg-brand-500/10 transition-all active:scale-95"
+              >
+                <HelpCircle className="w-5 h-5" />
+              </SidebarMenuButton>
+              
+              <SidebarMenuButton 
+                onClick={handleLogout}
+                tooltip="Sign Out" 
+                className="w-10 h-10 rounded-xl flex items-center justify-center text-red-500 hover:bg-red-50 hover:text-red-600 transition-all active:scale-95"
+              >
+                <LogOut className="w-5 h-5" />
+              </SidebarMenuButton>
+            </div>
           </SidebarFooter>
           <SidebarRail />
         </Sidebar>
