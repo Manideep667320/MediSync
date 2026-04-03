@@ -430,3 +430,20 @@ exports.parsePrescriptionText = async (req, res) => {
     });
   }
 };
+// Get all active pharmacies
+exports.getPharmacies = async (req, res) => {
+  try {
+    const pharmacies = await Pharmacy.find({ isActive: true })
+      .select('name address phone');
+
+    res.json({
+      success: true,
+      data: pharmacies
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};

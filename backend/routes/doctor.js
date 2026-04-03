@@ -33,4 +33,7 @@ router.get('/patients', doctorController.getPatients);
 // Analytics
 router.get('/analytics', doctorController.getAnalytics);
 
+// Pharmacies
+router.get('/pharmacies', doctorController.getPharmacies);
+
 module.exports = router;

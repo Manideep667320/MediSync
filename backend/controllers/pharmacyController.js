@@ -147,12 +147,16 @@ exports.getOrder = async (req, res) => {
   }
 };
 
+const { sendNotificationEmail } = require('../utils/emailService');
+
 // Update order status
 exports.updateOrderStatus = async (req, res) => {
   try {
     const { status, pharmacyNotes, estimatedTime, items } = req.body;
 
-    const order = await Order.findById(req.params.id);
+    const order = await Order.findById(req.params.id)
+      .populate('patientId')
+      .populate('pharmacyId');
 
     if (!order) {
       return res.status(404).json({
@@ -161,6 +165,7 @@ exports.updateOrderStatus = async (req, res) => {
       });
     }
 
+    const previousStatus = order.status;
     if (status) order.status = status;
     if (pharmacyNotes) order.pharmacyNotes = pharmacyNotes;
     if (estimatedTime) order.estimatedTime = estimatedTime;
@@ -172,6 +177,33 @@ exports.updateOrderStatus = async (req, res) => {
     }
 
     await order.save();
+
+    // Trigger Notification if status changed to ready_for_pickup
+    if (status === 'ready_for_pickup' && previousStatus !== 'ready_for_pickup') {
+      try {
+        // Fetch User to get email from the patient reference
+        const Patient = require('../models/Patient');
+        const User = require('../models/User');
+        
+        const patientData = await Patient.findById(order.patientId._id).populate('userId');
+        const userEmail = patientData.userId.email;
+
+        await sendNotificationEmail(
+          userEmail,
+          `MeidSync: Your Prescription ${order.orderId} is Ready for Pickup!`,
+          'READY_FOR_PICKUP',
+          {
+            patientName: `${patientData.firstName} ${patientData.lastName}`,
+            orderId: order.orderId,
+            pharmacyName: order.pharmacyId.name,
+            pharmacyAddress: order.pharmacyId.address
+          }
+        );
+      } catch (notifyError) {
+        console.error('Failed to send notification email:', notifyError);
+        // We don't fail the request if notification fails
+      }
+    }
 
     // Update pharmacy statistics
     if (status === 'completed') {

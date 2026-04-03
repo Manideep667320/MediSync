@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { LayoutDashboard, PlusCircle, Users, History, BarChart, Settings, Mic, Edit, X, Send, LogOut, Loader2, Square, Plus } from 'lucide-react';
 import {
   Sidebar,
@@ -42,6 +42,30 @@ export default function DoctorDashboard() {
     notes: '',
   });
 
+  const [pharmacies, setPharmacies] = useState<any[]>([]);
+  const [selectedPharmacyId, setSelectedPharmacyId] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const fetchPharmacies = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+      const response = await fetch(`${backendUrl}/doctor/pharmacies`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const result = await response.json();
+      if (result.success) {
+        setPharmacies(result.data);
+      }
+    } catch (error) {
+      console.error('Error fetching pharmacies:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchPharmacies();
+  }, []);
+
   // Voice recording state
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -66,6 +90,53 @@ export default function DoctorDashboard() {
     const updated = [...prescription.medicines];
     updated[index] = { ...updated[index], [field]: value };
     setPrescription({ ...prescription, medicines: updated });
+  };
+
+  const handleSendToPharmacy = async () => {
+    if (!prescription.patient_name || !selectedPharmacyId) {
+      alert('Please enter patient name and select a pharmacy');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const token = localStorage.getItem('token');
+      const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+      
+      // 1. Create Prescription
+      const createResponse = await fetch(`${backendUrl}/doctor/prescriptions`, {
+        method: 'POST',
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(prescription)
+      });
+      const createResult = await createResponse.json();
+      
+      if (!createResult.success) throw new Error(createResult.message);
+      
+      // 2. Send to Pharmacy
+      const sendResponse = await fetch(`${backendUrl}/doctor/prescriptions/${createResult.data._id}/send`, {
+        method: 'POST',
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ pharmacyId: selectedPharmacyId })
+      });
+      const sendResult = await sendResponse.json();
+      
+      if (sendResult.success) {
+        alert('Prescription sent successfully!');
+        setIsCreating(false);
+        setActiveTab('dashboard');
+      }
+    } catch (error: any) {
+      alert(error.message || 'Error sending to pharmacy');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const removeMedicine = (index: number) => {
@@ -670,6 +741,20 @@ export default function DoctorDashboard() {
                       />
                     </div>
 
+                    <div className="border-t border-brand-900/10 pt-6">
+                      <label className="block text-sm font-semibold text-brand-800 mb-2">Select Pharmacy *</label>
+                      <select
+                        value={selectedPharmacyId}
+                        onChange={(e) => setSelectedPharmacyId(e.target.value)}
+                        className="w-full px-4 py-3 glass-input bg-white"
+                      >
+                        <option value="">-- Choose a Pharmacy --</option>
+                        {pharmacies.map(p => (
+                          <option key={p._id} value={p._id}>{p.name} - {p.address}</option>
+                        ))}
+                      </select>
+                    </div>
+
                     <div className="flex gap-4 pt-6">
                       <button className="px-6 py-3 bg-brand-900/5 text-brand-800 rounded-xl font-semibold hover:bg-brand-900/10 transition-colors border border-brand-900/10">
                         Save as Draft
@@ -677,10 +762,17 @@ export default function DoctorDashboard() {
                       <button className="px-6 py-3 bg-brand-900/5 text-brand-800 rounded-xl font-semibold hover:bg-brand-900/10 transition-colors border border-brand-900/10">
                         Preview PDF
                       </button>
-                      <button className="flex-1 flex items-center justify-center gap-2 btn-gradient px-6 py-3 rounded-xl font-semibold">
+                      <button 
+                        onClick={handleSendToPharmacy}
+                        disabled={isSubmitting}
+                        className="flex-1 flex items-center justify-center gap-2 btn-gradient px-6 py-3 rounded-xl font-semibold disabled:opacity-50"
+                      >
                         <span className="relative z-10 flex items-center gap-2">
-                          <Send className="w-5 h-5" />
-                          Send to Pharmacy
+                          {isSubmitting ? (
+                            <><Loader2 className="w-5 h-5 animate-spin" /> Sending...</>
+                          ) : (
+                            <><Send className="w-5 h-5" /> Send to Pharmacy</>
+                          )}
                         </span>
                       </button>
                     </div>
