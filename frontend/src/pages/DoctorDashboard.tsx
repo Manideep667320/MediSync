@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { LayoutDashboard, PlusCircle, Users, History, BarChart, Settings, Mic, Edit, X, Send, LogOut, Loader2, Square, Plus } from 'lucide-react';
+import { LayoutDashboard, PlusCircle, Users, History, BarChart, Settings, Mic, Edit, X, Send, LogOut, Loader2, Square, Plus, Eye } from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
@@ -71,6 +71,34 @@ export default function DoctorDashboard() {
   const [isProcessing, setIsProcessing] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+
+  const [prescriptions, setPrescriptions] = useState<any[]>([]);
+  const [loadingPrescriptions, setLoadingPrescriptions] = useState(false);
+
+  const fetchPrescriptions = async () => {
+    setLoadingPrescriptions(true);
+    try {
+      const token = localStorage.getItem('token');
+      const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+      const response = await fetch(`${backendUrl}/doctor/prescriptions`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const result = await response.json();
+      if (result.success) {
+        setPrescriptions(result.data);
+      }
+    } catch (error) {
+      console.error('Error fetching prescriptions:', error);
+    } finally {
+      setLoadingPrescriptions(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'history') {
+      fetchPrescriptions();
+    }
+  }, [activeTab]);
 
   const addMedicine = () => {
     setPrescription(prev => ({
@@ -243,7 +271,7 @@ export default function DoctorDashboard() {
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'new', label: 'New Prescription', icon: PlusCircle },
     { id: 'patients', label: 'Patients', icon: Users },
-    { id: 'history', label: 'History', icon: History },
+    { id: 'history', label: 'My Prescriptions', icon: History },
     { id: 'analytics', label: 'Analytics', icon: BarChart },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
@@ -776,6 +804,100 @@ export default function DoctorDashboard() {
                         </span>
                       </button>
                     </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'history' && (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between mb-8">
+                  <div>
+                    <h1 className="text-3xl font-bold text-slate-900 font-display">My Prescriptions</h1>
+                    <p className="text-slate-500 mt-1">Review and manage your clinical records</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl">
+                      <History className="w-4 h-4 text-slate-400" />
+                      <span className="text-sm font-medium text-slate-600">Last 30 Days</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="card-clean overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="bg-slate-50 border-b border-slate-200">
+                          <th className="text-left px-6 py-4 font-semibold text-slate-500 text-xs uppercase tracking-wider">Patient</th>
+                          <th className="text-left px-6 py-4 font-semibold text-slate-500 text-xs uppercase tracking-wider">Diagnosis</th>
+                          <th className="text-left px-6 py-4 font-semibold text-slate-500 text-xs uppercase tracking-wider">Status</th>
+                          <th className="text-left px-6 py-4 font-semibold text-slate-500 text-xs uppercase tracking-wider">Date</th>
+                          <th className="px-6 py-4"></th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {loadingPrescriptions ? (
+                          <tr>
+                            <td colSpan={5} className="px-6 py-12 text-center">
+                              <div className="flex flex-col items-center gap-2">
+                                <Loader2 className="w-8 h-8 animate-spin text-brand-500" />
+                                <span className="text-slate-500 font-medium">Fetching clinical records...</span>
+                              </div>
+                            </td>
+                          </tr>
+                        ) : prescriptions.length > 0 ? (
+                          prescriptions.map((p, i) => (
+                            <tr key={i} className="hover:bg-slate-50/50 transition-colors">
+                              <td className="px-6 py-4">
+                                <div className="font-medium text-slate-900">{p.patientName}</div>
+                                <div className="text-xs text-slate-500">Age: {p.patientAge}</div>
+                              </td>
+                              <td className="px-6 py-4 text-slate-600 max-w-xs truncate">{p.diagnosis}</td>
+                              <td className="px-6 py-4">
+                                <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full ${
+                                  p.status === 'completed' ? 'bg-emerald-50 text-emerald-600' :
+                                  p.status === 'active' ? 'bg-brand-50 text-brand-600' :
+                                  'bg-slate-100 text-slate-600'
+                                }`}>
+                                  <span className={`w-1.5 h-1.5 rounded-full ${
+                                    p.status === 'completed' ? 'bg-emerald-500' :
+                                    p.status === 'active' ? 'bg-brand-500' :
+                                    'bg-slate-400'
+                                  }`} />
+                                  {p.status.toUpperCase()}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 text-slate-500">
+                                {new Date(p.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                              </td>
+                              <td className="px-6 py-4 text-right">
+                                <button className="p-2 text-slate-400 hover:text-brand-500 hover:bg-brand-50 rounded-lg transition-all">
+                                  <Eye className="w-4 h-4" />
+                                </button>
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan={5} className="px-6 py-12 text-center">
+                              <div className="flex flex-col items-center gap-3">
+                                <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center text-slate-300">
+                                  <History className="w-6 h-6" />
+                                </div>
+                                <div className="text-slate-500 font-medium">No prescriptions found</div>
+                                <button
+                                  onClick={() => setActiveTab('new')}
+                                  className="text-brand-500 hover:underline font-semibold text-sm"
+                                >
+                                  Create your first prescription
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               </div>

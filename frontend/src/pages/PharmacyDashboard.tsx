@@ -3,7 +3,7 @@ import {
   Package, BarChart, Settings, Eye, Check, X, Phone, LogOut, Plus, 
   RefreshCw, AlertCircle, CheckSquare, Truck, ClipboardList, RotateCcw, 
   FilePlus, AlertTriangle, TrendingUp, Clock, User, Search, 
-  ArrowUpRight, CheckCircle, Calendar, ChevronRight, Menu, Bell
+  ArrowUpRight, CheckCircle, Calendar, ChevronRight, Menu, Bell, Edit
 } from 'lucide-react';
 import {
   Sidebar,
@@ -66,6 +66,28 @@ export default function PharmacyDashboard() {
     ready: 0
   });
 
+  const [inventory, setInventory] = useState<any[]>([]);
+  const [loadingInventory, setLoadingInventory] = useState(false);
+
+  const fetchInventory = async () => {
+    setLoadingInventory(true);
+    try {
+      const token = localStorage.getItem('token');
+      const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+      const response = await fetch(`${backendUrl}/pharmacy/inventory`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const result = await response.json();
+      if (result.success) {
+        setInventory(result.data);
+      }
+    } catch (error) {
+      console.error('Error fetching inventory:', error);
+    } finally {
+      setLoadingInventory(false);
+    }
+  };
+
   const fetchData = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -95,6 +117,12 @@ export default function PharmacyDashboard() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  useEffect(() => {
+    if (activeTab === 'inventory') {
+      fetchInventory();
+    }
+  }, [activeTab]);
 
   const handleUpdateStatus = async (orderId: string, currentStatus: string) => {
     let nextStatus = '';
@@ -408,6 +436,122 @@ export default function PharmacyDashboard() {
                         </div>
                       ))}
                     </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'inventory' && (
+              <div className="max-w-7xl mx-auto space-y-10">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                  <div className="space-y-1">
+                    <h1 className="text-4xl font-bold text-brand-900 font-display">Pharmacy Inventory</h1>
+                    <p className="text-brand-500 text-lg">Manage your stock, pricing, and medical supplies.</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button className="flex items-center gap-2.5 px-6 py-4 bg-white border border-brand-900/10 rounded-xl font-bold hover:bg-slate-50 transition-all">
+                      <RefreshCw className="w-5 h-5 text-brand-500" />
+                      Sync Inventory
+                    </button>
+                    <button className="flex items-center gap-2.5 px-6 py-4 bg-[#004346] text-white rounded-xl font-bold hover:bg-[#003335] transition-all shadow-lg shadow-emerald-900/10">
+                      <Plus className="w-5 h-5" />
+                      Add New Medicine
+                    </button>
+                  </div>
+                </div>
+
+                <div className="bg-white border border-brand-900/5 rounded-[2rem] overflow-hidden shadow-sm">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                      <thead>
+                        <tr className="border-b border-brand-900/5 bg-slate-50/50">
+                          <th className="px-8 py-6 text-[10px] font-black text-brand-400 uppercase tracking-widest">MEDICINE NAME</th>
+                          <th className="px-8 py-6 text-[10px] font-black text-brand-400 uppercase tracking-widest">CATEGORY</th>
+                          <th className="px-8 py-6 text-[10px] font-black text-brand-400 uppercase tracking-widest">STOCK LEVEL</th>
+                          <th className="px-8 py-6 text-[10px] font-black text-brand-400 uppercase tracking-widest">UNIT PRICE</th>
+                          <th className="px-8 py-6 text-[10px] font-black text-brand-400 uppercase tracking-widest">STATUS</th>
+                          <th className="px-8 py-6 text-[10px] font-black text-brand-400 uppercase tracking-widest text-right">ACTIONS</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-brand-900/5">
+                        {loadingInventory ? (
+                          <tr>
+                            <td colSpan={6} className="px-8 py-20 text-center">
+                              <div className="flex flex-col items-center gap-2">
+                                <RefreshCw className="w-8 h-8 animate-spin text-brand-500" />
+                                <span className="text-brand-500 font-bold">Updating inventory register...</span>
+                              </div>
+                            </td>
+                          </tr>
+                        ) : inventory.length > 0 ? (
+                          inventory.map((item, idx) => (
+                            <tr key={idx} className="group hover:bg-slate-50/80 transition-colors">
+                              <td className="px-8 py-6">
+                                <div className="space-y-0.5">
+                                  <p className="font-bold text-brand-900">{item.medicineName || item.medicine_name}</p>
+                                  <p className="text-[10px] font-bold text-brand-400 uppercase tracking-tighter">SKU: {item.batchNumber || 'N/A'}</p>
+                                </div>
+                              </td>
+                              <td className="px-8 py-6">
+                                <span className="px-2.5 py-1 bg-slate-100 text-slate-600 rounded-md text-[10px] font-bold uppercase tracking-wider">
+                                  {item.category || 'General'}
+                                </span>
+                              </td>
+                              <td className="px-8 py-6">
+                                <div className="space-y-1.5">
+                                  <div className="flex items-center justify-between min-w-[120px]">
+                                    <span className="text-sm font-bold text-brand-900">{item.availableQuantity || item.stock_quantity} units</span>
+                                    <span className="text-[10px] font-bold text-brand-400">{Math.round(((item.availableQuantity || item.stock_quantity) / (item.minimumStockLevel || 100)) * 100)}%</span>
+                                  </div>
+                                  <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                    <div 
+                                      className={`h-full rounded-full transition-all duration-1000 ${
+                                        (item.availableQuantity || item.stock_quantity) < (item.minimumStockLevel || 10) ? 'bg-red-500' : 'bg-emerald-500'
+                                      }`}
+                                      style={{ width: `${Math.min(100, ((item.availableQuantity || item.stock_quantity) / (item.minimumStockLevel || 100)) * 100)}%` }}
+                                    />
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="px-8 py-6">
+                                <p className="font-bold text-brand-900">${(item.unitPrice || 0).toFixed(2)}</p>
+                              </td>
+                              <td className="px-8 py-6">
+                                <span className={`px-2.5 py-1 rounded-md text-[9px] font-black tracking-widest ${
+                                  (item.availableQuantity || item.stock_quantity) > 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
+                                }`}>
+                                  {(item.availableQuantity || item.stock_quantity) > 0 ? 'IN STOCK' : 'OUT OF STOCK'}
+                                </span>
+                              </td>
+                              <td className="px-8 py-6">
+                                <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <Edit className="w-4 h-4 text-brand-300 hover:text-brand-900 cursor-pointer transition-colors" />
+                                  <RotateCcw className="w-4 h-4 text-brand-300 hover:text-brand-900 cursor-pointer transition-colors" />
+                                  <X className="w-4 h-4 text-brand-300 hover:text-red-500 cursor-pointer transition-colors" />
+                                </div>
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan={6} className="px-8 py-20 text-center">
+                              <div className="flex flex-col items-center gap-4">
+                                <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center text-brand-200">
+                                  <ClipboardList className="w-8 h-8" />
+                                </div>
+                                <div className="space-y-1">
+                                  <p className="text-xl font-bold text-brand-900 font-display">Inventory Empty</p>
+                                  <p className="text-brand-400 text-sm">You haven't added any products to your digital pharmacy yet.</p>
+                                </div>
+                                <button className="mt-2 text-emerald-600 font-bold text-xs uppercase tracking-widest hover:underline">
+                                  BROWSE PRODUCT CATALOG
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               </div>
