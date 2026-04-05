@@ -778,7 +778,7 @@ export default function DoctorDashboard() {
                       >
                         <option value="">-- Choose a Pharmacy --</option>
                         {pharmacies.map(p => (
-                          <option key={p._id} value={p._id}>{p.name} - {p.address}</option>
+                          <option key={p._id} value={p._id}>{p.name} - {p.address?.city}, {p.address?.state}</option>
                         ))}
                       </select>
                     </div>

@@ -56,6 +56,12 @@ interface PharmacyResult {
   estimatedTime: number;
 }
 
+interface PreferredPharmacy {
+  name: string;
+  address: string | { street: string; city: string; state: string; zipCode: string; country: string };
+  hours: string;
+}
+
 export default function LocalDashboard() {
   const { navigate } = useRouter();
   const { logout } = useAuth();
@@ -109,7 +115,7 @@ export default function LocalDashboard() {
     { id: 'MS-38102-AQ', date: 'SEP 29, 2024', meds: 'Amoxicillin 250mg (Course of 14)', pharmacy: 'Walgreens Community', price: 12.00, icon: Syringe }
   ]);
 
-  const [preferredPharmacy] = useState({
+  const [preferredPharmacy] = useState<PreferredPharmacy>({
     name: 'CVS Pharmacy Downtown',
     address: '122 S Main St, Springfield',
     hours: '8:00 AM — 10:00 PM'
@@ -1061,7 +1067,11 @@ export default function LocalDashboard() {
                             <div>
                                <p className="text-[10px] font-black text-brand-200 uppercase tracking-widest mb-1 leading-none">Location</p>
                                <p className="text-sm font-bold">{preferredPharmacy.name}</p>
-                               <p className="text-xs font-medium text-brand-300/80">{preferredPharmacy.address}</p>
+                               <p className="text-xs font-medium text-brand-300/80">
+                                 {typeof preferredPharmacy.address === 'string' 
+                                   ? preferredPharmacy.address 
+                                   : `${(preferredPharmacy.address as any).street}, ${(preferredPharmacy.address as any).city}`}
+                               </p>
                             </div>
                             <div>
                                <p className="text-[10px] font-black text-brand-200 uppercase tracking-widest mb-1 leading-none">Hours Today</p>
