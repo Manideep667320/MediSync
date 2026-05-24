@@ -39,16 +39,15 @@ const storage = multer.diskStorage({
   }
 });
 
-// File filter
 const fileFilter = (req, file, cb) => {
-  const allowedTypes = /jpeg|jpg|png|pdf/;
+  const allowedTypes = /jpeg|jpg|png|gif|webp|heic|heif|pdf|txt|text/i;
   const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-  const mimetype = allowedTypes.test(file.mimetype);
+  const mimetype = allowedTypes.test(file.mimetype) || file.mimetype === 'text/plain';
 
-  if (extname && mimetype) {
+  if (extname || mimetype) {
     return cb(null, true);
   } else {
-    cb(new Error('Only image files (JPEG, JPG, PNG) and PDF are allowed!'));
+    cb(new Error('Only images, PDFs, and text files (.txt) are allowed!'));
   }
 };
 

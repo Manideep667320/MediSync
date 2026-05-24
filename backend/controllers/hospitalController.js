@@ -1,4 +1,5 @@
 const Hospital = require('../models/Hospital');
+const Doctor = require('../models/Doctor');
 
 // Get all hospitals
 exports.getHospitals = async (req, res) => {
@@ -134,6 +135,40 @@ exports.deleteHospital = async (req, res) => {
     res.json({
       success: true,
       message: 'Hospital deactivated successfully'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// Get doctors by hospital
+exports.getDoctors = async (req, res) => {
+  try {
+    const { hospitalId } = req.params;
+
+    const doctors = await Doctor.find({
+      hospitalId,
+      isActive: true
+    })
+      .select('firstName lastName specialty experience consultationFee profileImage qualification languages')
+      .sort({ firstName: 1 });
+
+    if (!doctors || doctors.length === 0) {
+      return res.json({
+        success: true,
+        data: {
+          doctors: [],
+          message: 'No doctors found for this hospital'
+        }
+      });
+    }
+
+    res.json({
+      success: true,
+      data: { doctors }
     });
   } catch (error) {
     res.status(500).json({

@@ -47,10 +47,16 @@ interface RouteProps {
 }
 
 export function Route({ path, element }: RouteProps) {
-  const { currentPath } = useRouter();
+  const routerContext = useRouter();
+  const currentPath = routerContext.currentPath;
 
   if (path === currentPath) {
     return <>{element}</>;
+  }
+
+  const paramNames = [...path.matchAll(/:([^/]+)/g)].map(m => m[1]);
+  if (paramNames.length === 0) {
+    return null;
   }
 
   const pathPattern = path.replace(/:[^/]+/g, '([^/]+)');
@@ -58,7 +64,16 @@ export function Route({ path, element }: RouteProps) {
   const match = currentPath.match(regex);
 
   if (match) {
-    return <>{element}</>;
+    const extractedParams: Record<string, string> = { ...routerContext.params };
+    paramNames.forEach((name, index) => {
+      extractedParams[name] = match[index + 1];
+    });
+
+    return (
+      <RouterContext.Provider value={{ ...routerContext, params: extractedParams }}>
+        {element}
+      </RouterContext.Provider>
+    );
   }
 
   return null;

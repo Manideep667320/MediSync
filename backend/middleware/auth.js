@@ -1,7 +1,10 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'medisync-secret-key-change-in-production';
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  throw new Error('FATAL ERROR: JWT_SECRET environment variable is not defined.');
+}
 
 // Verify JWT token
 exports.authenticate = async (req, res, next) => {
@@ -22,6 +25,14 @@ exports.authenticate = async (req, res, next) => {
       return res.status(401).json({ 
         success: false, 
         message: 'Invalid or inactive user.' 
+      });
+    }
+
+    // Verify token version to support revocation/logout
+    if (decoded.tokenVersion === undefined || decoded.tokenVersion !== user.tokenVersion) {
+      return res.status(401).json({
+        success: false,
+        message: 'Token has been revoked or expired.'
       });
     }
 
@@ -61,7 +72,7 @@ exports.optionalAuth = async (req, res, next) => {
       const decoded = jwt.verify(token, JWT_SECRET);
       const user = await User.findById(decoded.userId);
       
-      if (user && user.isActive) {
+      if (user && user.isActive && decoded.tokenVersion !== undefined && decoded.tokenVersion === user.tokenVersion) {
         req.user = {
           userId: user._id,
           email: user.email,
@@ -76,10 +87,10 @@ exports.optionalAuth = async (req, res, next) => {
 };
 
 // Generate JWT token
-exports.generateToken = (userId, role) => {
+exports.generateToken = (userId, role, tokenVersion = 0) => {
   return jwt.sign(
-    { userId, role },
+    { userId, role, tokenVersion },
     JWT_SECRET,
-    { expiresIn: '7d' }
+    { expiresIn: '1d' }
   );
 };

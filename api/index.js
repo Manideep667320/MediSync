@@ -17,6 +17,7 @@ const patientRoutes = require('../backend/routes/patient');
 const pharmacyRoutes = require('../backend/routes/pharmacy');
 const hospitalRoutes = require('../backend/routes/hospital');
 const localRoutes = require('../backend/routes/local');
+const notificationRoutes = require('../backend/routes/notifications');
 
 // Import middleware
 const { errorHandler } = require('../backend/middleware/errorHandler');
@@ -95,6 +96,7 @@ app.use('/api/pharmacy', pharmacyRoutes);
 app.use('/api/hospital', hospitalRoutes);
 app.use('/api/hospitals', hospitalRoutes);
 app.use('/api/local', localRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Error handling
 app.use(errorHandler);

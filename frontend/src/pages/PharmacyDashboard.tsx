@@ -5,6 +5,7 @@ import {
   FilePlus, AlertTriangle, TrendingUp, Clock, User, Search, 
   ArrowUpRight, CheckCircle, Calendar, ChevronRight, Menu, Bell, Edit
 } from 'lucide-react';
+import NotificationCenter from '../components/NotificationCenter';
 import {
   Sidebar,
   SidebarContent,
@@ -46,6 +47,32 @@ export default function PharmacyDashboard() {
   const [activeTab, setActiveTab] = useState('queue');
   const [selectedOrder, setSelectedOrder] = useState<string | null>(null);
 
+  // New Intake states
+  const [isIntakeOpen, setIsIntakeOpen] = useState(false);
+  const [intakePatientName, setIntakePatientName] = useState('');
+  const [intakePatientAge, setIntakePatientAge] = useState('30');
+  const [intakePatientGender, setIntakePatientGender] = useState('Male');
+  const [intakeDiagnosis, setIntakeDiagnosis] = useState('');
+  const [intakeMedicineName, setIntakeMedicineName] = useState('');
+  const [intakeDosage, setIntakeDosage] = useState('500mg');
+  const [intakeQuantity, setIntakeQuantity] = useState('10');
+  const [intakeFrequency, setIntakeFrequency] = useState('Once daily');
+  const [intakeDuration, setIntakeDuration] = useState('5 days');
+  const [intakeInstructions, setIntakeInstructions] = useState('Take as directed');
+  const [intakeDoctorNotes, setIntakeDoctorNotes] = useState('');
+
+  // Add Medicine states
+  const [isAddMedicineOpen, setIsAddMedicineOpen] = useState(false);
+  const [medName, setMedName] = useState('');
+  const [medStock, setMedStock] = useState('');
+  const [medPrice, setMedPrice] = useState('');
+
+  // Verification logs state
+  const [verificationLogs, setVerificationLogs] = useState<VerificationLog[]>([
+    { id: '#RX-88209', pharmacist: 'Ph. Aris Thorne', time: '2 mins ago' },
+    { id: '#RX-88208', pharmacist: 'Ph. Aris Thorne', time: '12 mins ago' },
+  ]);
+
   const handleLogout = () => {
     logout();
     navigate('/');
@@ -79,7 +106,8 @@ export default function PharmacyDashboard() {
       });
       const result = await response.json();
       if (result.success) {
-        setInventory(result.data);
+        const invData = Array.isArray(result.data.inventory) ? result.data.inventory : (Array.isArray(result.data) ? result.data : []);
+        setInventory(invData);
       }
     } catch (error) {
       console.error('Error fetching inventory:', error);
@@ -138,7 +166,7 @@ export default function PharmacyDashboard() {
       const token = localStorage.getItem('token');
       const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
       
-      const response = await fetch(`${backendUrl}/pharmacy/orders/${orderId}/status`, {
+      const response = await fetch(`${backendUrl}/pharmacy/orders/${orderId}`, {
         method: 'PUT',
         headers: { 
           'Authorization': `Bearer ${token}`,
@@ -150,9 +178,142 @@ export default function PharmacyDashboard() {
       const result = await response.json();
       if (result.success) {
         fetchData(); // Refresh data
+        if (nextStatus === 'received_by_pharmacy' || nextStatus === 'packing') {
+          addVerificationLog(orderId);
+        }
       }
     } catch (error) {
       console.error('Error updating status:', error);
+    }
+  };
+
+  const addVerificationLog = (orderId: string) => {
+    const orderObj = orders.find(o => o._id === orderId);
+    const orderNum = orderObj?.orderId || `#${orderId.substring(orderId.length - 6).toUpperCase()}`;
+    setVerificationLogs(prev => [
+      { id: orderNum.startsWith('#') ? orderNum : `#${orderNum}`, pharmacist: 'Ph. HealthPlus', time: 'Just now' },
+      ...prev
+    ]);
+  };
+
+  const handleQuickVerify = async () => {
+    const incomingOrder = orders.find(o => o.status === 'prescription_sent');
+    if (!incomingOrder) {
+      alert('No incoming prescriptions in queue.');
+      return;
+    }
+    await handleUpdateStatus(incomingOrder._id, 'prescription_sent');
+    alert(`Order #${incomingOrder.orderId || incomingOrder._id} quick-verified successfully!`);
+  };
+
+  const handleCreateIntake = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!intakePatientName || !intakeMedicineName) {
+      alert('Patient Name and Medicine Name are required.');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
+      const payload = {
+        patientName: intakePatientName,
+        patientAge: parseInt(intakePatientAge) || 30,
+        patientGender: intakePatientGender,
+        diagnosis: intakeDiagnosis,
+        medicines: [
+          {
+            medicineName: intakeMedicineName,
+            dosage: intakeDosage || '500mg',
+            frequency: intakeFrequency || 'Once daily',
+            duration: intakeDuration || '5 days',
+            quantity: parseInt(intakeQuantity) || 10,
+            instructions: intakeInstructions || 'Take as directed'
+          }
+        ],
+        doctorNotes: intakeDoctorNotes
+      };
+
+      const response = await fetch(`${backendUrl}/pharmacy/orders`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        alert('New intake order created successfully!');
+        setIsIntakeOpen(false);
+        // Clear form fields
+        setIntakePatientName('');
+        setIntakePatientAge('30');
+        setIntakePatientGender('Male');
+        setIntakeDiagnosis('');
+        setIntakeMedicineName('');
+        setIntakeDosage('500mg');
+        setIntakeQuantity('10');
+        setIntakeFrequency('Once daily');
+        setIntakeDuration('5 days');
+        setIntakeInstructions('Take as directed');
+        setIntakeDoctorNotes('');
+        
+        fetchData();
+        if (activeTab === 'inventory') fetchInventory();
+      } else {
+        throw new Error(result.message || 'Failed to create intake');
+      }
+    } catch (err: any) {
+      console.error('Intake creation failed:', err);
+      alert(err.message || 'Failed to create intake.');
+    }
+  };
+
+  const handleAddMedicine = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!medName || !medStock || !medPrice) {
+      alert('Medicine Name, Stock, and Price are required.');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
+      const payload = {
+        medicine: medName,
+        stock: parseInt(medStock) || 0,
+        price: parseFloat(medPrice) || 0
+      };
+
+      const response = await fetch(`${backendUrl}/pharmacy/inventory`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        alert('New medicine added to inventory successfully!');
+        setIsAddMedicineOpen(false);
+        // Clear form fields
+        setMedName('');
+        setMedStock('');
+        setMedPrice('');
+        
+        fetchInventory();
+      } else {
+        throw new Error(result.message || 'Failed to add medicine');
+      }
+    } catch (err: any) {
+      console.error('Failed to add medicine:', err);
+      alert(err.message || 'Failed to add medicine.');
     }
   };
 
@@ -166,11 +327,6 @@ export default function PharmacyDashboard() {
       default: return { label: (status || 'unknown').toUpperCase(), color: 'bg-slate-100 text-slate-700', icon: Package };
     }
   };
-
-  const verificationLogs: VerificationLog[] = [
-    { id: '#RX-88209', pharmacist: 'Ph. Aris Thorne', time: '2 mins ago' },
-    { id: '#RX-88208', pharmacist: 'Ph. Aris Thorne', time: '12 mins ago' },
-  ];
 
   return (
     <SidebarProvider>
@@ -244,7 +400,7 @@ export default function PharmacyDashboard() {
                 <h2 className="text-xl font-bold text-gradient font-display">MediSync</h2>
              </div>
              <div className="flex items-center gap-4">
-               <Bell className="w-5 h-5 text-brand-500" />
+               <NotificationCenter />
                <div className="w-8 h-8 rounded-full bg-orange-500" />
              </div>
           </header>
@@ -261,14 +417,20 @@ export default function PharmacyDashboard() {
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
-                    <button className="flex items-center gap-2.5 px-6 py-4 bg-emerald-50 text-emerald-800 rounded-xl font-bold hover:bg-emerald-100 transition-all border border-emerald-200">
-                      <CheckSquare className="w-5 h-5" />
-                      Quick Verify
-                    </button>
-                    <button className="flex items-center gap-2.5 px-6 py-4 bg-[#004346] text-white rounded-xl font-bold hover:bg-[#003335] transition-all shadow-lg shadow-emerald-900/10">
-                      <Plus className="w-5 h-5" />
-                      New Intake
-                    </button>
+                     <button 
+                       onClick={handleQuickVerify}
+                       className="flex items-center gap-2.5 px-6 py-4 bg-emerald-50 text-emerald-800 rounded-xl font-bold hover:bg-emerald-100 transition-all border border-emerald-200"
+                     >
+                       <CheckSquare className="w-5 h-5" />
+                       Quick Verify
+                     </button>
+                     <button 
+                       onClick={() => setIsIntakeOpen(true)}
+                       className="flex items-center gap-2.5 px-6 py-4 bg-[#004346] text-white rounded-xl font-bold hover:bg-[#003335] transition-all shadow-lg shadow-emerald-900/10"
+                     >
+                       <Plus className="w-5 h-5" />
+                       New Intake
+                     </button>
                   </div>
                 </div>
 
@@ -449,11 +611,17 @@ export default function PharmacyDashboard() {
                     <p className="text-brand-500 text-lg">Manage your stock, pricing, and medical supplies.</p>
                   </div>
                   <div className="flex items-center gap-3">
-                    <button className="flex items-center gap-2.5 px-6 py-4 bg-white border border-brand-900/10 rounded-xl font-bold hover:bg-slate-50 transition-all">
-                      <RefreshCw className="w-5 h-5 text-brand-500" />
+                    <button 
+                      onClick={fetchInventory}
+                      className="flex items-center gap-2.5 px-6 py-4 bg-white border border-brand-900/10 rounded-xl font-bold hover:bg-slate-50 transition-all"
+                    >
+                      <RefreshCw className={`w-5 h-5 text-brand-500 ${loadingInventory ? 'animate-spin' : ''}`} />
                       Sync Inventory
                     </button>
-                    <button className="flex items-center gap-2.5 px-6 py-4 bg-[#004346] text-white rounded-xl font-bold hover:bg-[#003335] transition-all shadow-lg shadow-emerald-900/10">
+                    <button 
+                      onClick={() => setIsAddMedicineOpen(true)}
+                      className="flex items-center gap-2.5 px-6 py-4 bg-[#004346] text-white rounded-xl font-bold hover:bg-[#003335] transition-all shadow-lg shadow-emerald-900/10"
+                    >
                       <Plus className="w-5 h-5" />
                       Add New Medicine
                     </button>
@@ -484,54 +652,60 @@ export default function PharmacyDashboard() {
                             </td>
                           </tr>
                         ) : inventory.length > 0 ? (
-                          inventory.map((item, idx) => (
-                            <tr key={idx} className="group hover:bg-slate-50/80 transition-colors">
-                              <td className="px-8 py-6">
-                                <div className="space-y-0.5">
-                                  <p className="font-bold text-brand-900">{item.medicineName || item.medicine_name}</p>
-                                  <p className="text-[10px] font-bold text-brand-400 uppercase tracking-tighter">SKU: {item.batchNumber || 'N/A'}</p>
-                                </div>
-                              </td>
-                              <td className="px-8 py-6">
-                                <span className="px-2.5 py-1 bg-slate-100 text-slate-600 rounded-md text-[10px] font-bold uppercase tracking-wider">
-                                  {item.category || 'General'}
-                                </span>
-                              </td>
-                              <td className="px-8 py-6">
-                                <div className="space-y-1.5">
-                                  <div className="flex items-center justify-between min-w-[120px]">
-                                    <span className="text-sm font-bold text-brand-900">{item.availableQuantity || item.stock_quantity} units</span>
-                                    <span className="text-[10px] font-bold text-brand-400">{Math.round(((item.availableQuantity || item.stock_quantity) / (item.minimumStockLevel || 100)) * 100)}%</span>
+                          inventory.map((item, idx) => {
+                            const nameVal = item.medicine || item.medicineName || item.medicine_name || 'Unknown';
+                            const stockVal = item.stock !== undefined ? item.stock : (item.availableQuantity || item.stock_quantity || 0);
+                            const priceVal = item.price !== undefined ? item.price : (item.unitPrice || 0);
+                            
+                            return (
+                              <tr key={idx} className="group hover:bg-slate-50/80 transition-colors">
+                                <td className="px-8 py-6">
+                                  <div className="space-y-0.5">
+                                    <p className="font-bold text-brand-900">{nameVal}</p>
+                                    <p className="text-[10px] font-bold text-brand-400 uppercase tracking-tighter">SKU: {item.batchNumber || 'N/A'}</p>
                                   </div>
-                                  <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                    <div 
-                                      className={`h-full rounded-full transition-all duration-1000 ${
-                                        (item.availableQuantity || item.stock_quantity) < (item.minimumStockLevel || 10) ? 'bg-red-500' : 'bg-emerald-500'
-                                      }`}
-                                      style={{ width: `${Math.min(100, ((item.availableQuantity || item.stock_quantity) / (item.minimumStockLevel || 100)) * 100)}%` }}
-                                    />
+                                </td>
+                                <td className="px-8 py-6">
+                                  <span className="px-2.5 py-1 bg-slate-100 text-slate-600 rounded-md text-[10px] font-bold uppercase tracking-wider">
+                                    {item.category || 'General'}
+                                  </span>
+                                </td>
+                                <td className="px-8 py-6">
+                                  <div className="space-y-1.5">
+                                    <div className="flex items-center justify-between min-w-[120px]">
+                                      <span className="text-sm font-bold text-brand-900">{stockVal} units</span>
+                                      <span className="text-[10px] font-bold text-brand-400">{Math.round((stockVal / (item.minimumStockLevel || 100)) * 100)}%</span>
+                                    </div>
+                                    <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                      <div 
+                                        className={`h-full rounded-full transition-all duration-1000 ${
+                                          stockVal < (item.minimumStockLevel || 10) ? 'bg-red-500' : 'bg-emerald-500'
+                                        }`}
+                                        style={{ width: `${Math.min(100, (stockVal / (item.minimumStockLevel || 100)) * 100)}%` }}
+                                      />
+                                    </div>
                                   </div>
-                                </div>
-                              </td>
-                              <td className="px-8 py-6">
-                                <p className="font-bold text-brand-900">${(item.unitPrice || 0).toFixed(2)}</p>
-                              </td>
-                              <td className="px-8 py-6">
-                                <span className={`px-2.5 py-1 rounded-md text-[9px] font-black tracking-widest ${
-                                  (item.availableQuantity || item.stock_quantity) > 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
-                                }`}>
-                                  {(item.availableQuantity || item.stock_quantity) > 0 ? 'IN STOCK' : 'OUT OF STOCK'}
-                                </span>
-                              </td>
-                              <td className="px-8 py-6">
-                                <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <Edit className="w-4 h-4 text-brand-300 hover:text-brand-900 cursor-pointer transition-colors" />
-                                  <RotateCcw className="w-4 h-4 text-brand-300 hover:text-brand-900 cursor-pointer transition-colors" />
-                                  <X className="w-4 h-4 text-brand-300 hover:text-red-500 cursor-pointer transition-colors" />
-                                </div>
-                              </td>
-                            </tr>
-                          ))
+                                </td>
+                                <td className="px-8 py-6">
+                                  <p className="font-bold text-brand-900">${priceVal.toFixed(2)}</p>
+                                </td>
+                                <td className="px-8 py-6">
+                                  <span className={`px-2.5 py-1 rounded-md text-[9px] font-black tracking-widest ${
+                                    stockVal > 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
+                                  }`}>
+                                    {stockVal > 0 ? 'IN STOCK' : 'OUT OF STOCK'}
+                                  </span>
+                                </td>
+                                <td className="px-8 py-6">
+                                  <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <Edit className="w-4 h-4 text-brand-300 hover:text-brand-900 cursor-pointer transition-colors" />
+                                    <RotateCcw className="w-4 h-4 text-brand-300 hover:text-brand-900 cursor-pointer transition-colors" />
+                                    <X className="w-4 h-4 text-brand-300 hover:text-red-500 cursor-pointer transition-colors" />
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })
                         ) : (
                           <tr>
                             <td colSpan={6} className="px-8 py-20 text-center">
@@ -560,9 +734,263 @@ export default function PharmacyDashboard() {
         </SidebarInset>
 
         {/* Floating Action Button */}
-        <button className="fixed bottom-10 right-10 w-16 h-16 bg-[#004346] text-white rounded-2xl shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all group z-30">
+        <button 
+          onClick={() => setIsIntakeOpen(true)}
+          className="fixed bottom-10 right-10 w-16 h-16 bg-[#004346] text-white rounded-2xl shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all group z-30 animate-bounce"
+          title="New Intake Form"
+        >
           <ClipboardList className="w-8 h-8 group-hover:rotate-12 transition-transform" />
         </button>
+
+        {/* New Intake Modal Dialog */}
+        {isIntakeOpen && (
+          <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-300">
+            <div className="bg-white rounded-[32px] max-w-2xl w-full p-8 border border-slate-100 shadow-2xl space-y-6 relative animate-in zoom-in-95 duration-300 max-h-[90vh] overflow-y-auto custom-scrollbar text-left">
+              <button 
+                onClick={() => setIsIntakeOpen(false)}
+                className="absolute top-6 right-6 p-2 rounded-full hover:bg-slate-100 transition-colors text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-6 h-6" />
+              </button>
+
+              <div className="space-y-1">
+                <h2 className="text-3xl font-bold text-brand-900 font-display">New Prescription Intake</h2>
+                <p className="text-brand-500 text-sm">Enter patient prescription details manually to log fulfillment.</p>
+              </div>
+
+              <form onSubmit={handleCreateIntake} className="space-y-6">
+                {/* Patient Info */}
+                <div className="space-y-4">
+                  <p className="text-[10px] font-black text-brand-400 uppercase tracking-widest border-b border-slate-100 pb-2">Patient Details</p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="md:col-span-2 space-y-1.5">
+                      <label className="text-xs font-bold text-brand-900">Full Name</label>
+                      <input 
+                        type="text" 
+                        required
+                        placeholder="Jane Doe" 
+                        value={intakePatientName}
+                        onChange={(e) => setIntakePatientName(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold text-brand-900 outline-none focus:border-orange-500/50 transition-all"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-brand-900">Age</label>
+                      <input 
+                        type="number" 
+                        required
+                        placeholder="30" 
+                        value={intakePatientAge}
+                        onChange={(e) => setIntakePatientAge(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold text-brand-900 outline-none focus:border-orange-500/50 transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-brand-900">Gender</label>
+                      <select
+                        value={intakePatientGender}
+                        onChange={(e) => setIntakePatientGender(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold text-brand-900 outline-none focus:border-orange-500/50 transition-all"
+                      >
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-brand-900">Diagnosis / Notes</label>
+                      <input 
+                        type="text" 
+                        placeholder="Acute Bronchitis" 
+                        value={intakeDiagnosis}
+                        onChange={(e) => setIntakeDiagnosis(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold text-brand-900 outline-none focus:border-orange-500/50 transition-all"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Medicine Info */}
+                <div className="space-y-4">
+                  <p className="text-[10px] font-black text-brand-400 uppercase tracking-widest border-b border-slate-100 pb-2">Prescription Items</p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="md:col-span-2 space-y-1.5">
+                      <label className="text-xs font-bold text-brand-900">Medicine Name</label>
+                      <input 
+                        type="text" 
+                        required
+                        placeholder="Amoxicillin" 
+                        value={intakeMedicineName}
+                        onChange={(e) => setIntakeMedicineName(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold text-brand-900 outline-none focus:border-orange-500/50 transition-all"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-brand-900">Dosage</label>
+                      <input 
+                        type="text" 
+                        placeholder="500mg" 
+                        value={intakeDosage}
+                        onChange={(e) => setIntakeDosage(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold text-brand-900 outline-none focus:border-orange-500/50 transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-brand-900">Quantity</label>
+                      <input 
+                        type="number" 
+                        placeholder="10" 
+                        value={intakeQuantity}
+                        onChange={(e) => setIntakeQuantity(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold text-brand-900 outline-none focus:border-orange-500/50 transition-all"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-brand-900">Frequency</label>
+                      <input 
+                        type="text" 
+                        placeholder="Twice daily" 
+                        value={intakeFrequency}
+                        onChange={(e) => setIntakeFrequency(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold text-brand-900 outline-none focus:border-orange-500/50 transition-all"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-brand-900">Duration</label>
+                      <input 
+                        type="text" 
+                        placeholder="5 days" 
+                        value={intakeDuration}
+                        onChange={(e) => setIntakeDuration(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold text-brand-900 outline-none focus:border-orange-500/50 transition-all"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-brand-900">Instructions</label>
+                      <input 
+                        type="text" 
+                        placeholder="After meals" 
+                        value={intakeInstructions}
+                        onChange={(e) => setIntakeInstructions(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold text-brand-900 outline-none focus:border-orange-500/50 transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-brand-900">Doctor's Notes (Optional)</label>
+                    <textarea 
+                      placeholder="Pharmacist instructions..." 
+                      value={intakeDoctorNotes}
+                      onChange={(e) => setIntakeDoctorNotes(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold text-brand-900 outline-none focus:border-orange-500/50 transition-all h-20 resize-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-4 pt-4">
+                  <button 
+                    type="button" 
+                    onClick={() => setIsIntakeOpen(false)}
+                    className="flex-1 py-4 border border-slate-200 text-brand-900 rounded-xl font-bold hover:bg-slate-50 transition-all active:scale-[0.98]"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit" 
+                    className="flex-1 py-4 bg-[#004346] hover:bg-[#003335] text-white rounded-xl font-bold transition-all active:scale-[0.98] shadow-lg shadow-emerald-900/10"
+                  >
+                    Submit Intake Order
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Add New Medicine Modal Dialog */}
+        {isAddMedicineOpen && (
+          <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-300">
+            <div className="bg-white rounded-[32px] max-w-md w-full p-8 border border-slate-100 shadow-2xl space-y-6 relative animate-in zoom-in-95 duration-300 max-h-[90vh] overflow-y-auto custom-scrollbar text-left">
+              <button 
+                onClick={() => setIsAddMedicineOpen(false)}
+                className="absolute top-6 right-6 p-2 rounded-full hover:bg-slate-100 transition-colors text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-6 h-6" />
+              </button>
+
+              <div className="space-y-1">
+                <h2 className="text-3xl font-bold text-brand-900 font-display">Add Medicine</h2>
+                <p className="text-brand-500 text-sm">Register a new medicine item in the pharmacy inventory database.</p>
+              </div>
+
+              <form onSubmit={handleAddMedicine} className="space-y-5">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-brand-900">Medicine Name</label>
+                  <input 
+                    type="text" 
+                    required
+                    placeholder="Amoxicillin 500mg" 
+                    value={medName}
+                    onChange={(e) => setMedName(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold text-brand-900 outline-none focus:border-emerald-500/50 transition-all"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-brand-900">Stock Quantity</label>
+                    <input 
+                      type="number" 
+                      required
+                      min="0"
+                      placeholder="100" 
+                      value={medStock}
+                      onChange={(e) => setMedStock(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold text-brand-900 outline-none focus:border-emerald-500/50 transition-all"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-brand-900">Price per Unit ($)</label>
+                    <input 
+                      type="number" 
+                      required
+                      min="0"
+                      step="0.01"
+                      placeholder="12.50" 
+                      value={medPrice}
+                      onChange={(e) => setMedPrice(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold text-brand-900 outline-none focus:border-emerald-500/50 transition-all"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-4 pt-4">
+                  <button 
+                    type="button" 
+                    onClick={() => setIsAddMedicineOpen(false)}
+                    className="flex-1 py-4 border border-slate-200 text-brand-900 rounded-xl font-bold hover:bg-slate-50 transition-all active:scale-[0.98]"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit" 
+                    className="flex-1 py-4 bg-[#004346] hover:bg-[#003335] text-white rounded-xl font-bold transition-all active:scale-[0.98] shadow-lg shadow-emerald-900/10"
+                  >
+                    Add Product
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
 
       <style>{`

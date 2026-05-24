@@ -20,6 +20,16 @@ class PatientService {
     return response.data;
   }
 
+  async cancelPrescription(id: string) {
+    const response = await api.patch(`/patient/prescriptions/${id}/cancel`);
+    return response.data;
+  }
+
+  async cancelConsultation(id: string) {
+    const response = await api.patch(`/patient/consultations/${id}/cancel`);
+    return response.data;
+  }
+
   async getOrders(params?: {
     status?: string;
     page?: number;

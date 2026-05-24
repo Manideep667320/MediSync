@@ -12,6 +12,7 @@ router.get('/dashboard', pharmacyController.getDashboard);
 
 // Orders
 router.get('/orders', pharmacyController.getOrders);
+router.post('/orders', pharmacyController.createIntake);
 router.get('/orders/:id', pharmacyController.getOrder);
 router.put('/orders/:id', pharmacyController.updateOrderStatus);
 

@@ -8,7 +8,7 @@ export interface NearbyPharmaciesData {
 }
 
 class LocalService {
-  async uploadPrescription(file: File) {
+  async uploadPrescription(file: File): Promise<any> {
     const formData = new FormData();
     formData.append('prescription', file);
 
@@ -17,12 +17,39 @@ class LocalService {
         'Content-Type': 'multipart/form-data',
       },
     });
-    return response.data;
+    return response as any;
   }
 
-  async findNearbyPharmacies(data: NearbyPharmaciesData) {
+  async findNearbyPharmacies(data: NearbyPharmaciesData): Promise<any> {
     const response = await api.post('/local/pharmacies/nearby', data);
-    return response.data;
+    return response as any;
+  }
+
+  async placeOrder(data: {
+    prescriptionId?: string;
+    prescriptionData?: any;
+    pharmacyId: string;
+    deliveryType: 'pickup' | 'home_delivery';
+    patientNotes?: string;
+    deliveryAddress?: any;
+  }): Promise<any> {
+    const response = await api.post('/local/orders', data);
+    return response as any;
+  }
+
+  async getOrders(): Promise<any> {
+    const response = await api.get('/local/orders');
+    return response as any;
+  }
+
+  async getOrder(id: string): Promise<any> {
+    const response = await api.get(`/local/orders/${id}`);
+    return response as any;
+  }
+
+  async getPrescriptions(): Promise<any> {
+    const response = await api.get('/local/prescriptions');
+    return response as any;
   }
 }
 

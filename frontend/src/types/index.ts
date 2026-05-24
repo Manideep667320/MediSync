@@ -26,96 +26,143 @@ export interface Hospital {
 }
 
 export interface User {
-  id: string;
+  _id: string;
   email: string;
-  role: 'doctor' | 'patient' | 'pharmacy';
-  full_name: string;
-  hospital_id?: string;
+  role: 'doctor' | 'patient' | 'pharmacy' | 'admin' | 'local';
   phone?: string;
-  specialization?: string;
-  license_number?: string;
-  created_at: string;
+  isActive?: boolean;
+  lastLogin?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Doctor {
+  _id: string;
+  userId: string;
+  hospitalId: string;
+  firstName: string;
+  lastName: string;
+  specialty: string;
+  qualification?: string;
+  licenseNumber: string;
+  experience: number;
+}
+
+export interface Patient {
+  _id: string;
+  userId: string;
+  hospitalId: string;
+  patientId: string;
+  firstName: string;
+  lastName: string;
+  dateOfBirth: string;
+  gender: 'Male' | 'Female' | 'Other';
+  bloodGroup: string;
 }
 
 export interface Pharmacy {
-  id: string;
+  _id: string;
+  userId?: string;
   name: string;
-  address: string;
-  city: string;
-  state: string;
+  licenseNumber: string;
+  address: {
+    street?: string;
+    city?: string;
+    state?: string;
+    zipCode?: string;
+    country?: string;
+  };
+  location?: {
+    type: string;
+    coordinates: [number, number];
+  };
   latitude?: number;
   longitude?: number;
+  phone: string;
+  email?: string;
   rating: number;
   verified: boolean;
   features: string[];
-  phone: string;
-  user_id?: string;
-  created_at: string;
+  deliveryAvailable: boolean;
+  deliveryRadius: number;
+  createdAt: string;
 }
 
 export interface Prescription {
-  id: string;
-  prescription_number: string;
-  doctor_id: string;
-  patient_id: string;
-  hospital_id: string;
+  _id: string;
+  prescriptionId: string;
+  doctorId?: any; // can be populated object or string id
+  patientId?: any; // can be populated object or string id
+  hospitalId?: any; // can be populated object or string id
+  patientName?: string;
+  patientAge?: number;
+  patientGender?: string;
   diagnosis: string;
   symptoms?: string;
-  notes?: string;
-  status: 'draft' | 'active' | 'completed' | 'cancelled';
-  prescription_date: string;
-  image_url?: string;
-  created_at: string;
-  updated_at: string;
+  doctorNotes?: string;
+  notes?: string; // fallback
+  medicines: PrescriptionMedicine[];
+  urgent: boolean;
+  isDigital: boolean;
+  status: 'PENDING' | 'SENT' | 'READY' | 'draft' | 'active' | 'completed' | 'cancelled';
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface PrescriptionMedicine {
-  id: string;
-  prescription_id: string;
-  medicine_name: string;
+  medicineName: string;
   dosage: string;
   frequency: string;
   duration: string;
   instructions?: string;
   quantity: number;
-  created_at: string;
 }
 
 export interface Order {
-  id: string;
-  order_number: string;
-  prescription_id: string;
-  patient_id: string;
-  pharmacy_id: string;
-  status: 'new' | 'checking' | 'confirmed' | 'packing' | 'ready' | 'out_for_delivery' | 'completed' | 'cancelled';
-  total_amount: number;
-  estimated_time: number;
-  delivery_type: 'pickup' | 'delivery';
-  notes?: string;
-  created_at: string;
-  updated_at: string;
-  completed_at?: string;
+  _id: string;
+  orderId: string;
+  prescriptionId: any; // can be populated object
+  patientId: any; // can be populated object
+  pharmacyId: any; // can be populated object
+  status: 'prescription_sent' | 'received_by_pharmacy' | 'checking_stock' | 'confirmed' | 'packing' | 'ready_for_pickup' | 'out_for_delivery' | 'completed' | 'cancelled';
+  totalAmount: number;
+  estimatedTime: number;
+  deliveryType: 'pickup' | 'delivery';
+  patientNotes?: string;
+  pharmacyNotes?: string;
+  items: Array<{
+    medicineName: string;
+    dosage: string;
+    quantity: number;
+    unitPrice?: number;
+    totalPrice?: number;
+    availability?: 'available' | 'unavailable';
+  }>;
+  timeline: Array<{
+    status: string;
+    timestamp: string;
+    note?: string;
+  }>;
+  createdAt: string;
+  updatedAt: string;
 }
 
-export interface Inventory {
-  id: string;
-  pharmacy_id: string;
-  medicine_name: string;
-  generic_name?: string;
-  category?: string;
-  stock_quantity: number;
-  min_stock_level: number;
-  unit_price: number;
-  expiry_date?: string;
-  batch_number?: string;
-  supplier?: string;
-  is_available: boolean;
-  created_at: string;
-  updated_at: string;
+export interface PharmacyInventory {
+  _id: string;
+  pharmacyId: string;
+  medicine: string;
+  stock: number;
+  price: number;
+  isAvailable: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface PharmacyWithAvailability extends Pharmacy {
   availabilityStatus: 'all_available' | 'partial_available' | 'none_available';
   totalPrice: number;
   distance?: number;
+  availableMedicinesCount: number;
+  totalRequestedMedicines: number;
+  estimatedTime: number;
 }

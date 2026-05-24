@@ -18,6 +18,7 @@ router.post('/prescriptions', doctorController.createPrescription);
 router.get('/prescriptions', doctorController.getPrescriptions);
 router.get('/prescriptions/:id', doctorController.getPrescription);
 router.put('/prescriptions/:id', doctorController.updatePrescription);
+router.post('/prescriptions/validate', doctorController.validatePrescription);
 
 // Voice to Text Prescription
 router.post('/voice-prescription', upload.single('audio'), doctorController.processVoicePrescription);
@@ -36,5 +37,9 @@ router.get('/analytics', doctorController.getAnalytics);
 
 // Pharmacies
 router.get('/pharmacies', doctorController.getPharmacies);
+
+// Consultations
+router.get('/consultations', doctorController.getConsultations);
+router.put('/consultations/:id/status', doctorController.updateConsultationStatus);
 
 module.exports = router;

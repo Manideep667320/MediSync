@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const Counter = require('./Counter');
 
 const billingItemSchema = new mongoose.Schema({
   description: String,
@@ -83,10 +84,14 @@ const billingSchema = new mongoose.Schema({
 });
 
 // Auto-generate bill ID
-billingSchema.pre('save', async function() {
+billingSchema.pre('validate', async function() {
   if (!this.billId) {
-    const count = await mongoose.model('Billing').countDocuments();
-    this.billId = `BILL${String(count + 1).padStart(6, '0')}`;
+    const counter = await Counter.findOneAndUpdate(
+      { id: 'billId' },
+      { $inc: { seq: 1 } },
+      { new: true, upsert: true }
+    );
+    this.billId = `BILL${String(counter.seq).padStart(6, '0')}`;
   }
 });
 

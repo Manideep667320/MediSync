@@ -2,8 +2,12 @@ import { useState, useEffect } from 'react';
 import { 
   FileText, Clock, Package, User, Settings, Download, Eye, MapPin, Phone, 
   Map as MapIcon, FileCheck, LogOut, Heart, Activity, Moon, Plus, 
-  Calendar, ChevronRight, Search, Bell, Menu, ShieldCheck, Pill, CheckCircle
+  Calendar, ChevronRight, Search, Bell, Menu, ShieldCheck, Pill, CheckCircle, XCircle
 } from 'lucide-react';
+import patientService from '../services/patientService';
+import NotificationCenter from '../components/NotificationCenter';
+import Modal from '../components/Modal';
+import ConsultationBookingModal from '../components/patient-dashboard/ConsultationBookingModal';
 import {
   Sidebar,
   SidebarContent,
@@ -22,11 +26,60 @@ import {
 import { useRouter } from '../components/Router';
 import { useAuth } from '../context/AuthContext';
 
+const isDoctorIssuedPrescription = (prescription: any) => {
+  const status = (prescription.status || '').toLowerCase();
+  if (status === 'cancelled') return false;
+  if (prescription.doctorNotes?.startsWith('Consultation ')) return false;
+  const meds = prescription.medicines || prescription.items || [];
+  if (meds.length === 0) return false;
+  return !meds.every((m: any) => m.medicineName === 'Awaiting consultation');
+};
+
+const formatConsultationForDisplay = (consultation: any, index: number) => {
+  const scheduled = new Date(consultation.scheduledDate);
+  const now = new Date();
+  const daysUntil = (scheduled.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
+  const isCurrent = index === 0 && daysUntil >= -1 && daysUntil <= 7;
+
+  const doctor = consultation.doctorId;
+  const doctorName = doctor?.firstName
+    ? `Dr. ${doctor.firstName} ${doctor.lastName}`
+    : 'Doctor';
+
+  const typeLabel =
+    consultation.reason ||
+    doctor?.specialty ||
+    (consultation.consultationType === 'video'
+      ? 'Video consultation'
+      : consultation.consultationType === 'phone'
+        ? 'Phone consultation'
+        : 'In-person consultation');
+
+  const hospitalName = consultation.hospitalId?.name || 'Clinic';
+  const timeStr = scheduled.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  const dateLabel =
+    daysUntil <= 7 && daysUntil >= -1
+      ? scheduled.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' }).toUpperCase()
+      : scheduled.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }).toUpperCase();
+
+  return {
+    id: consultation._id,
+    raw: consultation,
+    date: dateLabel,
+    doctor: doctorName,
+    type: typeLabel,
+    time: `${timeStr} — ${hospitalName}`,
+    status: isCurrent ? ('current' as const) : ('upcoming' as const),
+  };
+};
+
 export default function PatientDashboard() {
   const { navigate } = useRouter();
-  const { logout } = useAuth();
+  const { profile, logout } = useAuth();
   const [activeTab, setActiveTab] = useState('prescriptions');
   const [selectedPrescription, setSelectedPrescription] = useState<string | null>(null);
+  const [viewingOrder, setViewingOrder] = useState<any | null>(null);
+  const [showConsultationModal, setShowConsultationModal] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -42,20 +95,149 @@ export default function PatientDashboard() {
   ];
 
   const [orders, setOrders] = useState<any[]>([]);
+  const [prescriptions, setPrescriptions] = useState<any[]>([]);
+  const [consultations, setConsultations] = useState<any[]>([]);
+  const [patientRecord, setPatientRecord] = useState<any>(null);
+  const [patientHospitalId, setPatientHospitalId] = useState<string | undefined>();
   const [loading, setLoading] = useState(true);
+  const [cancellingApptId, setCancellingApptId] = useState<string | null>(null);
+
+  const patient = profile || patientRecord;
+  const patientFirstName = patient?.firstName || '';
+  const patientLastName = patient?.lastName || '';
+  const patientDisplayName = patientFirstName
+    ? `${patientFirstName} ${patientLastName}`.trim()
+    : 'Patient';
+  const patientIdLabel = patient?.patientId ? `Patient ID: ${patient.patientId}` : '';
+  const patientInitials = patientFirstName
+    ? `${patientFirstName.charAt(0)}${patientLastName?.charAt(0) || ''}`.toUpperCase()
+    : 'P';
+
+  const handlePrint = (order: any) => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    const medicinesHtml = order.items?.map((m: any) => `
+      <tr style="border-bottom: 1px solid #e2e8f0;">
+        <td style="padding: 12px; font-weight: bold; color: #0f172a;">${m.medicineName || m.medicine_name}</td>
+        <td style="padding: 12px; color: #334155;">${m.dosage}</td>
+        <td style="padding: 12px; color: #334155;">${m.frequency}</td>
+        <td style="padding: 12px; color: #334155;">${m.duration}</td>
+        <td style="padding: 12px; color: #334155; text-align: center;">${m.quantity}</td>
+      </tr>
+    `).join('') || '';
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Prescription_${order.orderId || 'Download'}</title>
+          <style>
+            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; color: #1e293b; line-height: 1.5; }
+            .header { display: flex; justify-content: space-between; border-bottom: 2px solid #10b981; padding-bottom: 20px; margin-bottom: 30px; }
+            .title { font-size: 28px; font-weight: bold; color: #0f766e; margin: 0; }
+            .rx-symbol { font-size: 36px; font-weight: bold; color: #0f766e; margin-bottom: 10px; }
+            .section { margin-bottom: 25px; }
+            .section-title { font-size: 16px; font-weight: bold; color: #0f172a; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; margin-bottom: 12px; }
+            .grid { display: grid; grid-template-cols: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+            .label { font-size: 11px; color: #64748b; font-weight: bold; text-transform: uppercase; }
+            .value { font-size: 14px; font-weight: 600; color: #0f172a; }
+            table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+            th { background: #f8fafc; padding: 12px; text-align: left; font-size: 11px; font-weight: bold; color: #64748b; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; }
+            .footer { margin-top: 50px; border-top: 1px solid #e2e8f0; padding-top: 20px; font-size: 12px; color: #64748b; text-align: center; }
+            @media print {
+              body { padding: 0; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div>
+              <h1 class="title">MediSync Prescription Record</h1>
+              <p style="margin: 4px 0 0 0; color: #64748b;">Patient Digital Healthcare Network</p>
+            </div>
+            <div style="text-align: right;">
+              <p style="font-weight: bold; margin: 0; color: #0f172a;">Order ID: ${order.orderId || 'N/A'}</p>
+              <p style="margin: 4px 0 0 0; color: #64748b;">Date: ${new Date(order.createdAt || Date.now()).toLocaleDateString()}</p>
+            </div>
+          </div>
+
+          <div class="grid">
+            <div>
+              <span class="label">Patient Name</span>
+              <div class="value">${patientDisplayName}</div>
+            </div>
+            <div>
+              <span class="label">Status</span>
+              <div class="value">${(order.status || 'Active').replace(/_/g, ' ').toUpperCase()}</div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">Clinical Indication</div>
+            <div style="font-size: 14px; color: #334155;">
+              <strong>Diagnosis:</strong> ${order.prescriptionId?.diagnosis || 'Diagnosis recorded by physician'}<br/>
+              <strong>Symptoms:</strong> ${order.prescriptionId?.symptoms || 'Symptoms recorded by physician'}
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="rx-symbol">℞</div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Medication</th>
+                  <th>Dosage</th>
+                  <th>Frequency</th>
+                  <th>Duration</th>
+                  <th style="text-align: center;">Qty</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${medicinesHtml}
+              </tbody>
+            </table>
+          </div>
+
+          ${order.patientNotes ? `
+            <div class="section">
+              <div class="section-title">Patient Notes</div>
+              <p style="font-size: 13px; color: #475569; margin: 0; white-space: pre-wrap;">${order.patientNotes}</p>
+            </div>
+          ` : ''}
+
+          <div class="footer">
+            <p>This is a digitally verified prescription record from the MediSync platform.</p>
+            <p>Pharmacy Partner: ${order.pharmacyId?.name || 'MediSync network pharmacy'}</p>
+          </div>
+
+          <script>
+            window.onload = function() {
+              window.print();
+              setTimeout(function() { window.close(); }, 500);
+            }
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
 
   const fetchData = async () => {
     try {
       const token = localStorage.getItem('token');
       const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
       
-      const response = await fetch(`${backendUrl}/patient/orders`, {
+      const response = await fetch(`${backendUrl}/patient/dashboard`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const result = await response.json();
       
       if (result.success) {
-        setOrders(result.data.orders);
+        setOrders(result.data.activeOrders || []);
+        setPrescriptions(result.data.recentPrescriptions || []);
+        setConsultations(result.data.upcomingConsultations || []);
+        setPatientRecord(result.data.patient || null);
+        setPatientHospitalId(result.data.patient?.hospitalId);
       }
     } catch (error) {
       console.error('Error fetching patient data:', error);
@@ -63,6 +245,51 @@ export default function PatientDashboard() {
       setLoading(false);
     }
   };
+
+  const addConsultationToList = (consultation: any) => {
+    if (!consultation) return;
+    setConsultations((prev) => {
+      const id = consultation._id;
+      if (id && prev.some((c) => c._id === id)) return prev;
+      return [...prev, consultation].sort(
+        (a, b) => new Date(a.scheduledDate).getTime() - new Date(b.scheduledDate).getTime()
+      );
+    });
+  };
+
+  const handleCancelConsultation = async (consultation: any) => {
+    const id = consultation._id;
+    if (!id) return;
+
+    if (!window.confirm('Cancel this appointment? This cannot be undone.')) return;
+
+    const isLocalOnly = String(id).startsWith('mock-appt-');
+    if (isLocalOnly) {
+      setConsultations((prev) => prev.filter((c) => c._id !== id));
+      return;
+    }
+
+    try {
+      setCancellingApptId(id);
+      const result = await patientService.cancelConsultation(id);
+      if (result.success) {
+        setConsultations((prev) => prev.filter((c) => c._id !== id));
+      } else {
+        alert(result.message || 'Failed to cancel appointment');
+      }
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to cancel appointment');
+    } finally {
+      setCancellingApptId(null);
+    }
+  };
+
+  const doctorPrescriptions = prescriptions.filter(isDoctorIssuedPrescription);
+
+  const sortedConsultations = [...consultations].sort(
+    (a, b) => new Date(a.scheduledDate).getTime() - new Date(b.scheduledDate).getTime()
+  );
+  const displayAppointments = sortedConsultations.map((c, i) => formatConsultationForDisplay(c, i));
 
   useEffect(() => {
     fetchData();
@@ -78,31 +305,6 @@ export default function PatientDashboard() {
       default: return { label: (status || 'UNKNOWN').toUpperCase().replace(/_/g, ' '), type: 'muted' };
     }
   };
-
-  const appointments = [
-    {
-      id: 1,
-      date: 'THURSDAY, OCT 24',
-      doctor: 'Dr. Michael Chen',
-      type: 'Cardiology Follow-up',
-      time: '10:30 AM — Central Clinic',
-      status: 'current',
-    },
-    {
-      id: 2,
-      date: 'NOV 12',
-      doctor: 'Blood Work Lab',
-      type: 'Routine Screening',
-      status: 'upcoming',
-    },
-    {
-      id: 3,
-      date: 'DEC 05',
-      doctor: 'Annual Wellness Exam',
-      type: 'Primary Care',
-      status: 'upcoming',
-    },
-  ];
 
   const healthInsights = [
     {
@@ -183,11 +385,13 @@ export default function PatientDashboard() {
           <SidebarFooter className="border-t border-brand-900/10 p-4">
             <div className="flex items-center gap-3 mb-4 group-data-[collapsible=icon]:justify-center">
               <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-green-600 rounded-full flex items-center justify-center text-brand-900 font-semibold text-sm flex-shrink-0 shadow-sm shadow-emerald-500/20">
-                JD
+                {patientInitials}
               </div>
               <div className="group-data-[collapsible=icon]:hidden overflow-hidden">
-                <div className="font-semibold text-brand-900 text-sm truncate">John Doe</div>
-                <div className="text-xs text-brand-500 truncate">Patient ID: PT12345</div>
+                <div className="font-semibold text-brand-900 text-sm truncate">{patientDisplayName}</div>
+                {patientIdLabel && (
+                  <div className="text-xs text-brand-500 truncate">{patientIdLabel}</div>
+                )}
               </div>
             </div>
             <button
@@ -209,7 +413,7 @@ export default function PatientDashboard() {
                 <h2 className="text-xl font-bold text-gradient font-display">MediSync</h2>
              </div>
              <div className="flex items-center gap-4">
-               <Bell className="w-5 h-5 text-brand-500" />
+               <NotificationCenter />
                <div className="w-8 h-8 rounded-full bg-emerald-500" />
              </div>
           </header>
@@ -221,12 +425,15 @@ export default function PatientDashboard() {
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                   <div className="space-y-2">
                     <p className="text-brand-500 font-semibold uppercase tracking-widest text-xs">PATIENT DASHBOARD</p>
-                    <h1 className="text-4xl lg:text-5xl font-bold text-brand-900 font-display">Good morning, Alex.</h1>
+                    <h1 className="text-4xl lg:text-5xl font-bold text-brand-900 font-display">Good morning, {patientFirstName || patientDisplayName}.</h1>
                     <p className="text-brand-700/80 max-w-xl text-lg">
-                      Your health journey is looking steady. You have <span className="text-emerald-600 font-bold">{orders.filter(o => o.status !== 'completed').length} active prescriptions</span> and <span className="text-emerald-600 font-bold">one upcoming visit</span>.
+                      Your health journey is looking steady. You have <span className="text-emerald-600 font-bold">{doctorPrescriptions.length} prescription{doctorPrescriptions.length === 1 ? '' : 's'}</span> from your doctor{consultations.length > 0 ? <> and <span className="text-emerald-600 font-bold">{consultations.length} upcoming appointment{consultations.length === 1 ? '' : 's'}</span></> : ''}.
                     </p>
                   </div>
-                  <button className="flex items-center gap-2 px-6 py-4 bg-[#004346] text-white rounded-xl font-bold hover:bg-[#003335] transition-all shadow-lg shadow-emerald-900/20 active:scale-95 whitespace-nowrap">
+                  <button 
+                    onClick={() => setShowConsultationModal(true)}
+                    className="flex items-center gap-2 px-6 py-4 bg-[#004346] text-white rounded-xl font-bold hover:bg-[#003335] transition-all shadow-lg shadow-emerald-900/20 active:scale-95 whitespace-nowrap"
+                  >
                     <Plus className="w-5 h-5" />
                     New Consultation
                   </button>
@@ -242,45 +449,46 @@ export default function PatientDashboard() {
                     </div>
 
                     <div className="space-y-4">
-                      {orders.slice(0, 3).map((order, idx) => {
-                        const statusInfo = getStatusInfo(order.status);
+                      {doctorPrescriptions.slice(0, 3).map((prescription) => {
+                        const prescriptionKey = prescription._id || prescription.prescriptionId;
+                        const primaryMed = prescription.medicines?.[0] || prescription.items?.[0];
+
                         return (
                           <div 
-                            key={idx} 
+                            key={prescriptionKey} 
                             className="group p-5 bg-white border border-brand-900/5 rounded-2xl hover:shadow-xl hover:shadow-emerald-900/5 transition-all duration-500 flex flex-col sm:flex-row items-center justify-between gap-4"
                           >
                             <div className="flex items-center gap-5 w-full">
                               <div className="w-14 h-14 rounded-full bg-emerald-50/50 flex items-center justify-center text-emerald-600 group-hover:bg-emerald-500 group-hover:text-white transition-colors">
-                                <Pill className="w-7 h-7" />
+                                <FileText className="w-7 h-7" />
                               </div>
                               <div className="space-y-1">
                                 <h3 className="text-lg font-bold text-brand-900 group-hover:text-emerald-700 transition-colors">
-                                  {order.items?.[0]?.medicineName || 'Prescription Order'}
+                                  {prescription.diagnosis || 'Prescription'}
                                 </h3>
                                 <p className="text-brand-500 text-sm font-medium">
-                                  {order.items?.[0]?.dosage || 'View details for dosage'}
+                                  {primaryMed?.medicineName || 'Medication'} · {prescription.doctorId?.firstName ? `Dr. ${prescription.doctorId.firstName} ${prescription.doctorId.lastName}` : 'Doctor'}
                                 </p>
                               </div>
                             </div>
-                            <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
-                              <span className={`px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest uppercase flex items-center gap-2 ${
-                                statusInfo.type === 'success' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 
-                                statusInfo.type === 'warning' ? 'bg-amber-50 text-amber-600 border border-amber-100' : 
-                                'bg-slate-50 text-slate-500 border border-slate-100'
-                              }`}>
-                                {statusInfo.type === 'success' && <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />}
-                                {statusInfo.label}
-                              </span>
-                              <button className="px-5 py-2.5 rounded-xl font-bold text-sm transition-all text-emerald-600 hover:bg-emerald-50">
-                                Details
+                            <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end flex-wrap">
+                              <button 
+                                onClick={() => setViewingOrder({
+                                  prescriptionId: prescription,
+                                  items: prescription.medicines || prescription.items || [],
+                                  ...prescription,
+                                })}
+                                className="px-5 py-2.5 rounded-xl font-bold text-sm transition-all text-emerald-600 hover:bg-emerald-50"
+                              >
+                                View Rx
                               </button>
                             </div>
                           </div>
                         );
                       })}
-                      {orders.length === 0 && !loading && (
+                      {doctorPrescriptions.length === 0 && !loading && (
                         <div className="p-10 text-center bg-white border border-brand-900/5 rounded-2xl text-brand-400 font-bold">
-                          No active prescriptions found.
+                          No prescriptions from your doctor yet. They will appear here after your consultation.
                         </div>
                       )}
                     </div>
@@ -300,9 +508,17 @@ export default function PatientDashboard() {
                     <div className="space-y-8 p-6 bg-white border border-brand-900/5 rounded-3xl relative overflow-hidden">
                       <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 blur-3xl -mr-16 -mt-16 rounded-full" />
                       
-                      {appointments.map((appt, idx) => (
+                      {displayAppointments.length === 0 && !loading && (
+                        <p className="text-brand-400 text-sm font-medium text-center py-4">
+                          No upcoming appointments. Book a consultation to get started.
+                        </p>
+                      )}
+
+                      {displayAppointments.map((appt, idx) => {
+                        const isCancelling = cancellingApptId === appt.id;
+                        return (
                         <div key={appt.id} className="relative">
-                          {idx !== appointments.length - 1 && (
+                          {idx !== displayAppointments.length - 1 && (
                             <div className="absolute left-3 top-10 w-0.5 h-16 bg-brand-900/5" />
                           )}
                           
@@ -317,20 +533,43 @@ export default function PatientDashboard() {
                                 <Clock className="w-3.5 h-3.5 text-emerald-600" />
                                 {appt.time}
                               </div>
+                              <button
+                                type="button"
+                                onClick={() => handleCancelConsultation(appt.raw)}
+                                disabled={isCancelling}
+                                className="text-red-600 hover:text-red-700 text-xs font-bold flex items-center gap-1 disabled:opacity-50"
+                              >
+                                <XCircle className="w-3.5 h-3.5" />
+                                {isCancelling ? 'Cancelling…' : 'Cancel appointment'}
+                              </button>
                             </div>
                           ) : (
-                            <div className="flex items-start gap-5 pl-1.5 transition-all hover:translate-x-1">
+                            <div className="flex items-start gap-5 pl-1.5 transition-all hover:translate-x-1 group/appt">
                               <div className="w-3 h-3 rounded-full bg-brand-900/10 mt-2 border-2 border-white ring-4 ring-brand-900/5" />
-                              <div className="space-y-1 pb-2">
+                              <div className="space-y-1 pb-2 flex-1">
                                 <p className="text-[10px] font-bold text-brand-400 uppercase tracking-widest">{appt.date}</p>
                                 <h4 className="text-brand-900 font-bold text-sm tracking-tight">{appt.doctor}</h4>
+                                <p className="text-brand-500 text-xs">{appt.type}</p>
+                                <button
+                                  type="button"
+                                  onClick={() => handleCancelConsultation(appt.raw)}
+                                  disabled={isCancelling}
+                                  className="text-red-500 hover:text-red-600 text-[10px] font-bold opacity-0 group-hover/appt:opacity-100 transition-opacity disabled:opacity-50"
+                                >
+                                  {isCancelling ? 'Cancelling…' : 'Cancel'}
+                                </button>
                               </div>
                             </div>
                           )}
                         </div>
-                      ))}
+                      );
+                      })}
 
-                      <button className="w-full py-4 mt-4 bg-emerald-50/50 text-emerald-800 border border-emerald-100/80 rounded-2xl font-bold text-sm hover:bg-emerald-500 hover:text-white transition-all duration-300">
+                      <button
+                        type="button"
+                        onClick={() => setShowConsultationModal(true)}
+                        className="w-full py-4 mt-4 bg-emerald-50/50 text-emerald-800 border border-emerald-100/80 rounded-2xl font-bold text-sm hover:bg-emerald-500 hover:text-white transition-all duration-300"
+                      >
                         Schedule Appointment
                       </button>
                     </div>
@@ -479,7 +718,107 @@ export default function PatientDashboard() {
           </div>
         </SidebarInset>
       </div>
-      
+
+      {/* Prescription Detail & Print Modal */}
+      {viewingOrder && (
+        <Modal
+          isOpen={!!viewingOrder}
+          onClose={() => setViewingOrder(null)}
+          title={`Prescription Details: ${viewingOrder.prescriptionId || viewingOrder.orderId || 'Record'}`}
+          size="lg"
+        >
+          <div className="space-y-6">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div>
+                <span className="text-[10px] bg-emerald-50 text-emerald-700 font-black px-2.5 py-1 rounded-full uppercase tracking-wider">
+                  Verified Record
+                </span>
+                <p className="text-xs text-slate-400 mt-1">Issued on {new Date(viewingOrder.createdAt).toLocaleDateString()}</p>
+              </div>
+              <button
+                onClick={() => handlePrint(viewingOrder)}
+                className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm transition-all shadow-md shadow-emerald-500/10 active:scale-95"
+              >
+                <Download className="w-4 h-4" /> Download PDF / Print
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-6 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+              <div>
+                <span className="text-[10px] text-slate-400 font-bold block uppercase tracking-wider">Patient</span>
+                <span className="font-semibold text-slate-900">{patientDisplayName}</span>
+              </div>
+              <div>
+                <span className="text-[10px] text-slate-400 font-bold block uppercase tracking-wider">Pharmacy Partner</span>
+                <span className="font-semibold text-slate-900">{viewingOrder.pharmacyId?.name || 'MediSync Partner'}</span>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <h4 className="text-sm font-bold text-slate-800 uppercase tracking-wide">Diagnosis & Indication</h4>
+              <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm text-slate-700 space-y-1">
+                <p><strong>Diagnosis:</strong> {viewingOrder.diagnosis || viewingOrder.prescriptionId?.diagnosis || 'Diagnosis recorded by physician'}</p>
+                <p><strong>Symptoms:</strong> {viewingOrder.symptoms || viewingOrder.prescriptionId?.symptoms || 'Symptoms recorded by physician'}</p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <h4 className="text-sm font-bold text-slate-800 uppercase tracking-wide">Prescribed Medications</h4>
+              <div className="space-y-2">
+                {(viewingOrder.items?.length ? viewingOrder.items : viewingOrder.medicines)?.map((med: any, idx: number) => (
+                  <div key={idx} className="p-4 bg-slate-50 border border-slate-100 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                      <div className="font-semibold text-slate-900">{med.medicineName || med.medicine_name}</div>
+                      {med.instructions && (
+                        <div className="text-xs text-slate-500 mt-0.5">Instructions: {med.instructions}</div>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-4 gap-4 text-xs font-bold text-slate-500 md:text-right">
+                      <div>
+                        <span className="block text-[9px] text-slate-400 uppercase tracking-wider">Dosage</span>
+                        {med.dosage || 'N/A'}
+                      </div>
+                      <div>
+                        <span className="block text-[9px] text-slate-400 uppercase tracking-wider">Frequency</span>
+                        {med.frequency || 'N/A'}
+                      </div>
+                      <div>
+                        <span className="block text-[9px] text-slate-400 uppercase tracking-wider">Duration</span>
+                        {med.duration || 'N/A'}
+                      </div>
+                      <div>
+                        <span className="block text-[9px] text-slate-400 uppercase tracking-wider">Qty</span>
+                        {med.quantity || 'N/A'}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {viewingOrder.patientNotes && (
+              <div className="p-4 bg-emerald-500/5 border border-emerald-500/10 rounded-2xl">
+                <h4 className="text-xs font-bold text-emerald-800 uppercase tracking-wider mb-1">Your Notes</h4>
+                <p className="text-sm text-emerald-700 whitespace-pre-wrap">{viewingOrder.patientNotes}</p>
+              </div>
+            )}
+          </div>
+        </Modal>
+      )}
+
+      {/* Consultation Booking Modal */}
+      <ConsultationBookingModal 
+        isOpen={showConsultationModal}
+        onClose={() => setShowConsultationModal(false)}
+        hospitalId={patientHospitalId}
+        onSuccess={(consultation) => {
+          setShowConsultationModal(false);
+          addConsultationToList(consultation);
+          const isLocalOnly = String(consultation?._id || '').startsWith('mock-appt-');
+          if (!isLocalOnly) fetchData();
+        }}
+      />
+
       <style>{`
         .custom-scrollbar::-webkit-scrollbar {
           width: 6px;

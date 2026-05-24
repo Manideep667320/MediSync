@@ -54,7 +54,7 @@ exports.register = async (req, res) => {
     }
 
     // Generate token
-    const token = generateToken(user._id, user.role);
+    const token = generateToken(user._id, user.role, user.tokenVersion || 0);
 
     res.status(201).json({
       success: true,
@@ -133,7 +133,7 @@ exports.login = async (req, res) => {
     }
 
     // Generate token
-    const token = generateToken(user._id, user.role);
+    const token = generateToken(user._id, user.role, user.tokenVersion || 0);
 
     res.json({
       success: true,
@@ -240,6 +240,14 @@ exports.updateProfile = async (req, res) => {
 // Logout (client-side token removal, but we can track it)
 exports.logout = async (req, res) => {
   try {
+    if (req.user && req.user.userId) {
+      const user = await User.findById(req.user.userId);
+      if (user) {
+        user.tokenVersion = (user.tokenVersion || 0) + 1;
+        await user.save();
+      }
+    }
+    
     res.json({
       success: true,
       message: 'Logged out successfully'

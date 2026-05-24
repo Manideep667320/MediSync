@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const Counter = require('./Counter');
 
 const orderItemSchema = new mongoose.Schema({
   medicineName: String,
@@ -27,6 +28,11 @@ const orderSchema = new mongoose.Schema({
   patientId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Patient'
+  },
+  localUserId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: false
   },
   pharmacyId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -75,6 +81,10 @@ const orderSchema = new mongoose.Schema({
     default: 'pending'
   },
   paymentMethod: String,
+  inventoryDeducted: {
+    type: Boolean,
+    default: false
+  },
   timeline: [{
     status: String,
     timestamp: { type: Date, default: Date.now },
@@ -91,10 +101,14 @@ const orderSchema = new mongoose.Schema({
 });
 
 // Auto-generate order ID
-orderSchema.pre('save', async function() {
+orderSchema.pre('validate', async function() {
   if (!this.orderId) {
-    const count = await mongoose.model('Order').countDocuments();
-    this.orderId = `ORD${String(count + 1).padStart(6, '0')}`;
+    const counter = await Counter.findOneAndUpdate(
+      { id: 'orderId' },
+      { $inc: { seq: 1 } },
+      { new: true, upsert: true }
+    );
+    this.orderId = `ORD${String(counter.seq).padStart(6, '0')}`;
   }
 });
 

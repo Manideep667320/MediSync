@@ -176,7 +176,81 @@ exports.updateOrderStatus = async (req, res) => {
       order.totalAmount = items.reduce((sum, item) => sum + (item.totalPrice || 0), 0);
     }
 
+    // Auto-deduct inventory if transitioning to received_by_pharmacy, confirmed, or completed
+    if (
+      status &&
+      ['received_by_pharmacy', 'confirmed', 'completed'].includes(status) &&
+      !order.inventoryDeducted
+    ) {
+      try {
+        const PharmacyInventory = require('../models/PharmacyInventory');
+        for (const item of order.items) {
+          const invItem = await PharmacyInventory.findOne({
+            pharmacyId: order.pharmacyId._id,
+            medicine: { $regex: new RegExp(`^${item.medicineName || item.medicine_name}$`, 'i') }
+          });
+          if (invItem) {
+            invItem.stock = Math.max(0, invItem.stock - item.quantity);
+            if (invItem.stock <= 0) {
+              invItem.isAvailable = false;
+            }
+            await invItem.save();
+          }
+        }
+        order.inventoryDeducted = true;
+      } catch (err) {
+        console.error('Inventory auto-deduction failed:', err);
+      }
+    }
+
     await order.save();
+
+    // Trigger in-app notification to the patient on status change
+    if (status && status !== previousStatus) {
+      try {
+        const Patient = require('../models/Patient');
+        const patientObj = await Patient.findById(order.patientId).populate('userId');
+        if (patientObj && patientObj.userId) {
+          const Notification = require('../models/Notification');
+          
+          let title = 'Order Update';
+          let message = `Your order ${order.orderId} status has been updated to ${status.replace(/_/g, ' ')}.`;
+          let type = 'info';
+
+          if (status === 'received_by_pharmacy') {
+            title = 'Order Confirmed';
+            message = `Pharmacy has received your order ${order.orderId} and is verifying stock.`;
+            type = 'success';
+          } else if (status === 'packing') {
+            title = 'Order Packing';
+            message = `Pharmacy is packing your medicines for order ${order.orderId}.`;
+            type = 'info';
+          } else if (status === 'ready_for_pickup') {
+            title = 'Order Ready for Pickup';
+            message = `Your order ${order.orderId} is packed and ready for pickup at ${order.pharmacyId.name || 'the pharmacy'}.`;
+            type = 'success';
+          } else if (status === 'completed') {
+            title = 'Order Completed';
+            message = `Your order ${order.orderId} has been successfully picked up/delivered.`;
+            type = 'success';
+          } else if (status === 'cancelled') {
+            title = 'Order Cancelled';
+            message = `Your order ${order.orderId} has been cancelled.`;
+            type = 'warning';
+          }
+
+          await Notification.create({
+            userId: patientObj.userId._id || patientObj.userId,
+            title,
+            message,
+            type,
+            link: '/dashboard'
+          });
+        }
+      } catch (notifyError) {
+        console.error('Failed to create in-app status notification:', notifyError);
+      }
+    }
 
     // Trigger Notification if status changed to ready_for_pickup
     if (status === 'ready_for_pickup' && previousStatus !== 'ready_for_pickup') {
@@ -251,6 +325,10 @@ exports.getInventory = async (req, res) => {
       query.medicine = new RegExp(search, 'i');
     }
 
+    console.log('--- GET INVENTORY DEBUG ---');
+    console.log('Pharmacy ID:', pharmacy._id);
+    console.log('Query:', JSON.stringify(query));
+    
     const inventory = await PharmacyInventory.find(query)
       .sort({ medicine: 1 })
       .limit(limit * 1)
@@ -468,6 +546,82 @@ exports.getAnalytics = async (req, res) => {
         ordersTimeline,
         topMedicines
       }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// Create new intake prescription and order
+exports.createIntake = async (req, res) => {
+  try {
+    const pharmacy = await Pharmacy.findOne({ userId: req.user.userId });
+    if (!pharmacy) {
+      return res.status(404).json({
+        success: false,
+        message: 'Pharmacy profile not found'
+      });
+    }
+
+    const { patientName, patientAge, patientGender, diagnosis, medicines, doctorNotes } = req.body;
+
+    // 1. Create a Prescription first
+    const prescription = await Prescription.create({
+      patientName,
+      patientAge: parseInt(patientAge) || 30,
+      patientGender: patientGender || 'Male',
+      diagnosis: diagnosis || 'Intake Walk-in',
+      medicines: (medicines || []).map(m => ({
+        medicineName: m.medicineName || m.name || 'Unknown',
+        dosage: m.dosage || '500mg',
+        frequency: m.frequency || 'Once daily',
+        duration: m.duration || '5 days',
+        quantity: parseInt(m.quantity) || 10,
+        instructions: m.instructions || 'Take as directed'
+      })),
+      doctorNotes,
+      isDigital: true,
+      status: 'active'
+    });
+
+    // 2. Query pharmacy inventory for pricing
+    const pharmacyInventory = await PharmacyInventory.find({
+      pharmacyId: pharmacy._id,
+      medicine: { $in: prescription.medicines.map(m => m.medicineName) }
+    });
+
+    const items = prescription.medicines.map(med => {
+      const match = pharmacyInventory.find(inv => inv.medicine.toLowerCase() === med.medicineName.toLowerCase());
+      const unitPrice = match ? match.price : 10.0;
+      const quantity = med.quantity || 1;
+      return {
+        medicineName: med.medicineName,
+        dosage: med.dosage,
+        quantity,
+        unitPrice,
+        totalPrice: unitPrice * quantity
+      };
+    });
+
+    const totalAmount = items.reduce((sum, item) => sum + item.totalPrice, 0);
+
+    // 3. Create the Order
+    const order = await Order.create({
+      prescriptionId: prescription._id,
+      pharmacyId: pharmacy._id,
+      deliveryType: 'pickup',
+      items,
+      totalAmount,
+      status: 'confirmed'
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Intake order created successfully',
+      data: order
     });
   } catch (error) {
     res.status(500).json({

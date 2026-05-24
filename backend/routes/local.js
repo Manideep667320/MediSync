@@ -17,10 +17,14 @@ router.post(
 // Find nearby pharmacies - public endpoint (no auth required)
 router.post('/pharmacies/nearby', localController.findNearbyPharmacies);
 
-// Save prescription (for local users) - requires authentication
+// Prescriptions (for local users) - requires authentication
+router.get('/prescriptions', authenticate, localController.getPrescriptions);
 router.post('/prescriptions', authenticate, localController.savePrescription);
-
-// Get prescription - requires authentication
 router.get('/prescriptions/:id', authenticate, localController.getPrescription);
+
+// Orders (for local users) - requires authentication
+router.post('/orders', authenticate, localController.placeOrder);
+router.get('/orders', authenticate, localController.getOrders);
+router.get('/orders/:id', authenticate, localController.getOrder);
 
 module.exports = router;

@@ -3,6 +3,7 @@ const Doctor = require('../models/Doctor');
 const Patient = require('../models/Patient');
 const Order = require('../models/Order');
 const Pharmacy = require('../models/Pharmacy');
+const Consultation = require('../models/Consultation');
 const fs = require('fs');
 const { AssemblyAI } = require('assemblyai');
 const { parseText, extractVoiceContext } = require('../services/prescriptionParser');
@@ -34,10 +35,14 @@ exports.getDashboard = async (req, res) => {
       doctorId: doctor._id
     });
 
-    const recentPrescriptions = await Prescription.find({ doctorId: doctor._id })
+    const recentPrescriptions = await Prescription.find({ 
+      doctorId: doctor._id,
+      status: { $ne: 'cancelled' },
+      doctorNotes: { $not: /^Consultation / }
+    })
       .populate('patientId', 'firstName lastName patientId')
       .sort({ createdAt: -1 })
-      .limit(5);
+      .limit(10);
 
     res.json({
       success: true,
@@ -83,11 +88,26 @@ exports.createPrescription = async (req, res) => {
     doctor.statistics.totalPrescriptions += 1;
     await doctor.save();
 
-    // Update patient statistics if patient exists
+    // Update patient statistics and notify them if patient exists
     if (prescription.patientId) {
-      await Patient.findByIdAndUpdate(prescription.patientId, {
+      const patientObj = await Patient.findByIdAndUpdate(prescription.patientId, {
         $inc: { 'statistics.totalPrescriptions': 1 }
-      });
+      }, { new: true });
+
+      if (patientObj && patientObj.userId) {
+        try {
+          const Notification = require('../models/Notification');
+          await Notification.create({
+            userId: patientObj.userId,
+            title: 'New Prescription Issued',
+            message: `Dr. ${doctor.firstName} ${doctor.lastName} has created prescription ${prescription.prescriptionId || ''} for you.`,
+            type: 'success',
+            link: '/dashboard'
+          });
+        } catch (err) {
+          console.error('Failed to create patient notification:', err);
+        }
+      }
     }
 
     res.status(201).json({
@@ -109,7 +129,10 @@ exports.getPrescriptions = async (req, res) => {
     const doctor = await Doctor.findOne({ userId: req.user.userId });
 
     const { status, page = 1, limit = 10, search } = req.query;
-    const query = { doctorId: doctor._id };
+    const query = { 
+      doctorId: doctor._id,
+      doctorNotes: { $not: /^Consultation / } 
+    };
 
     if (status) query.status = status;
     if (search) {
@@ -230,6 +253,10 @@ exports.sendToPharmacy = async (req, res) => {
       })),
       status: 'prescription_sent'
     });
+
+    // Update prescription status
+    prescription.status = 'SENT';
+    await prescription.save();
 
     res.status(201).json({
       success: true,
@@ -440,5 +467,159 @@ exports.getPharmacies = async (req, res) => {
       success: false,
       message: error.message
     });
+  }
+};
+
+// Validate prescription medicines for duplicates and dosage warnings
+exports.validatePrescription = async (req, res) => {
+  try {
+    const { medicines } = req.body;
+
+    if (!medicines || !Array.isArray(medicines)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Medicines array is required for validation'
+      });
+    }
+
+    const alerts = [];
+    const namesSeen = new Set();
+
+    for (let med of medicines) {
+      const nameNorm = (med.medicineName || med.medicine_name || '').trim().toLowerCase();
+      if (!nameNorm) continue;
+
+      // 1. Duplicate Check
+      if (namesSeen.has(nameNorm)) {
+        alerts.push({
+          type: 'DUPLICATE',
+          severity: 'WARNING',
+          message: `Therapeutic Duplicate: '${med.medicineName || med.medicine_name}' is prescribed multiple times.`,
+          medicineName: med.medicineName || med.medicine_name
+        });
+      }
+      namesSeen.add(nameNorm);
+
+      // 2. Dosage check
+      const dosageStr = (med.dosage || '').trim().toLowerCase();
+      let numericDosage = 0;
+      if (dosageStr.includes('mg')) {
+        numericDosage = parseFloat(dosageStr.replace(/[^\d.]/g, '')) || 0;
+      } else if (dosageStr.includes('g') && !dosageStr.includes('mcg')) {
+        numericDosage = (parseFloat(dosageStr.replace(/[^\d.]/g, '')) || 0) * 1000;
+      } else if (dosageStr.includes('mcg')) {
+        numericDosage = (parseFloat(dosageStr.replace(/[^\d.]/g, '')) || 0) / 1000;
+      }
+
+      if (nameNorm.includes('paracetamol') || nameNorm.includes('acetaminophen')) {
+        if (numericDosage > 1000) {
+          alerts.push({
+            type: 'DOSAGE',
+            severity: 'CRITICAL',
+            message: `High Dosage Alert: Paracetamol dosage (${med.dosage}) exceeds the standard maximum single dose of 1000mg.`,
+            medicineName: med.medicineName || med.medicine_name
+          });
+        }
+      } else if (nameNorm.includes('amoxicillin')) {
+        if (numericDosage > 1000) {
+          alerts.push({
+            type: 'DOSAGE',
+            severity: 'CRITICAL',
+            message: `High Dosage Alert: Amoxicillin dosage (${med.dosage}) exceeds the recommended maximum single dose of 1000mg.`,
+            medicineName: med.medicineName || med.medicine_name
+          });
+        }
+      } else if (nameNorm.includes('metformin')) {
+        if (numericDosage > 1000) {
+          alerts.push({
+            type: 'DOSAGE',
+            severity: 'WARNING',
+            message: `High Dosage Alert: Metformin single dose (${med.dosage}) is high. Standard single dose should not exceed 1000mg.`,
+            medicineName: med.medicineName || med.medicine_name
+          });
+        }
+      } else if (nameNorm.includes('lisinopril')) {
+        if (numericDosage > 40) {
+          alerts.push({
+            type: 'DOSAGE',
+            severity: 'CRITICAL',
+            message: `High Dosage Alert: Lisinopril dosage (${med.dosage}) exceeds the typical maximum single dose of 40mg.`,
+            medicineName: med.medicineName || med.medicine_name
+          });
+        }
+      } else if (nameNorm.includes('cetirizine')) {
+        if (numericDosage > 10) {
+          alerts.push({
+            type: 'DOSAGE',
+            severity: 'WARNING',
+            message: `High Dosage Alert: Cetirizine dosage (${med.dosage}) exceeds the standard daily dose of 10mg.`,
+            medicineName: med.medicineName || med.medicine_name
+          });
+        }
+      }
+    }
+
+    res.json({
+      success: true,
+      isValid: alerts.length === 0,
+      alerts
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// Get doctor's consultations
+exports.getConsultations = async (req, res) => {
+  try {
+    const doctor = await Doctor.findOne({ userId: req.user.userId });
+    if (!doctor) {
+      return res.status(404).json({ success: false, message: 'Doctor not found' });
+    }
+
+    const { status } = req.query;
+    const query = { doctorId: doctor._id };
+    if (status) {
+      query.status = status;
+    }
+
+    const consultations = await Consultation.find(query)
+      .populate('patientId', 'firstName lastName patientId dateOfBirth gender phone')
+      .populate('hospitalId', 'name')
+      .sort({ scheduledDate: 1 });
+
+    res.json({
+      success: true,
+      data: consultations
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Update consultation status
+exports.updateConsultationStatus = async (req, res) => {
+  try {
+    const { status } = req.body;
+    const consultation = await Consultation.findByIdAndUpdate(
+      req.params.id,
+      { status },
+      { new: true, runValidators: true }
+    );
+
+    if (!consultation) {
+      return res.status(404).json({ success: false, message: 'Consultation not found' });
+    }
+
+    res.json({
+      success: true,
+      message: 'Consultation status updated',
+      data: consultation
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
 };

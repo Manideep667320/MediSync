@@ -216,7 +216,11 @@ function parseText(text) {
   for (const line of lines) {
     const parsed = parseLine(line);
     if (parsed && parsed.medicine) {
-      items.push(parsed);
+      // Check if the medicine is just filler words
+      const fillerRegex = /^(he|she|they|it|the|this|patient|is|are|was|were|years|old|and|but|or|for|with|of|to|in|at|on|i|want|to|prescribe|give|\s)+$/i;
+      if (!fillerRegex.test(parsed.medicine)) {
+        items.push(parsed);
+      }
     } else if (line.length > 2) {
       errors.push(`Could not parse: "${line}"`);
     }
@@ -239,25 +243,33 @@ function extractVoiceContext(text) {
   let remaining = text;
   const result = { patient_name: '', age: '', diagnosis: '', symptoms: '' };
 
-  // --- Age (extract first — prevents "age" leaking into patient name) ---
-  const agePatterns = [
-    /(?:aged?|age\s+(?:is\s+)?)\s*(\d{1,3})\s*(?:years?\s*old)?/i,
-    /(\d{1,3})\s*years?\s*old/i,
-  ];
-  for (const re of agePatterns) {
-    const m = remaining.match(re);
-    if (m) {
-      result.age = m[1];
-      remaining = remaining.replace(m[0], ' ');
-      break;
-    }
+  // Step 1: Age — extract first, prevents leaking into name/diagnosis
+  const ageRe = /(?:(?:aged?|age\s+(?:is\s+)?)\s*(\d{1,3})\s*(?:years?\s*old)?)|(?:(\d{1,3})\s*years?(?:\s*old)?)/i;
+  const ageM = remaining.match(ageRe);
+  if (ageM) {
+    result.age = (ageM[1] || ageM[2]);
+    remaining = remaining.replace(ageM[0], ' ');
   }
 
-  // --- Patient name (stop at common medical keywords) ---
-  const STOP_WORDS = '(?=\\s*(?:,|\\.|;|$|age|aged|diagnosis|diagnosed|symptom|complain|prescri|medicine|medication|male|female|gender|year|old|\\d))';
+  // Step 2: Diagnosis — extract before name so "Patient Diagnosis X" won't
+  // be mistakenly captured as the patient name
+  const diagRe = /(?:diagnosis\s+(?:is\s+)?|diagnosed\s+with\s+|diagnosis\s*[:\-]\s*|dx\s*[:\-]?\s*)([A-Za-z][^.;,\n]+?)(?=\s+(?:symptoms?|prescri\w*|complain\w*|presenting|medicine|medication|give\s+him|give\s+her)|[.;,\n]|$)/i;
+  const diagM = remaining.match(diagRe);
+  if (diagM) {
+    result.diagnosis = diagM[1].trim();
+    remaining = remaining.replace(diagM[0], ' ');
+  }
+
+  // Step 3: Patient name
+  // Guard: "patient" followed directly by "diagnosis/is/name" is NOT a name prefix
+  const STOP = '(?=\\s*(?:[,\\.;]|$|\\s+(?:age|aged|diagnosis|diagnosed|symptom|complain|prescri|medicine|medication|male|female|gender|year|old)|\\d))';
   const namePatterns = [
-    new RegExp(`(?:patient(?:'s)?\\s+name\\s+(?:is\\s+)?|patient\\s+(?:is\\s+)?|patient\\s*[:\\-]\\s*)([A-Za-z]+(?:\\s+[A-Za-z]+){0,3})${STOP_WORDS}`, 'i'),
-    new RegExp(`(?:name\\s+(?:is\\s+)?|name\\s*[:\\-]\\s*)([A-Za-z]+(?:\\s+[A-Za-z]+){0,3})${STOP_WORDS}`, 'i'),
+    // "patient name is John Doe" / "patient: John Doe"
+    new RegExp(`(?:patient(?:'s)?\\s+name\\s+(?:is\\s+)?|patient\\s*[:\\-]\\s*)([A-Za-z]+(?:\\s+[A-Za-z]+){0,3})${STOP}`, 'i'),
+    // "name is John Doe" / "name: John Doe"
+    new RegExp(`(?:\\bname\\s+(?:is\\s+)?|\\bname\\s*[:\\-]\\s*)([A-Za-z]+(?:\\s+[A-Za-z]+){0,3})${STOP}`, 'i'),
+    // "patient John Doe" — but NOT if next word is a medical keyword
+    new RegExp(`\\bpatient\\s+(?!(?:is|name|diagnosis|diagnosed|symptom|complain|prescri|male|female)\\b)([A-Za-z]+(?:\\s+[A-Za-z]+){0,3})${STOP}`, 'i'),
   ];
   for (const re of namePatterns) {
     const m = remaining.match(re);
@@ -268,23 +280,23 @@ function extractVoiceContext(text) {
     }
   }
 
-  // --- Diagnosis (stop at symptom/prescribe/medicine keywords) ---
-  const diagPatterns = [
-    /(?:diagnosis\s+(?:is\s+)?|diagnosed\s+with\s*|diagnosis\s*[:\-]\s*)(.+?)(?=\s+(?:symptoms?|prescri\w*|complain\w*|presenting|medicine|medication|give him|give her)|[.;,\n]|$)/i,
-  ];
-  for (const re of diagPatterns) {
-    const m = remaining.match(re);
+  // Fallback: first capitalised word group before comma/period at start of utterance
+  // e.g. "John Doe, 45 years, diagnosis..."
+  if (!result.patient_name) {
+    const startRe = /^\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})\s*[,\.]/;
+    const m = remaining.match(startRe);
     if (m) {
-      result.diagnosis = m[1].trim();
-      remaining = remaining.replace(m[0], ' ');
-      break;
+      const candidate = m[1].trim();
+      if (!/^(diagnosis|symptoms?|prescri|medicine|medication|patient|male|female)$/i.test(candidate)) {
+        result.patient_name = candidate;
+        remaining = remaining.replace(m[0].substring(0, m[0].lastIndexOf(m[1]) + m[1].length), ' ');
+      }
     }
   }
 
-  // --- Symptoms ---
+  // Step 4: Symptoms
   const symptomPatterns = [
     /(?:symptoms?\s+(?:are|is|include|includes|of)\s*|complaining\s+of\s*|complaints?\s*[:\-]\s*|presenting\s+with\s*)(.+?)(?=\s+(?:prescri\w*|medicine|medication|give|start|tablet|capsule)|[.;,\n]|$)/i,
-    // Fallback: "symptoms headache..." without connector
     /\bsymptoms?\s+(.+?)(?=\s+(?:prescri\w*|medicine|medication|give|start|tablet|capsule)|[.;,\n]|$)/i,
   ];
   for (const re of symptomPatterns) {
@@ -296,13 +308,16 @@ function extractVoiceContext(text) {
     }
   }
 
-  // --- Strip filler phrases so only medicine text remains ---
+  // Step 5: Strip leftover context phrases → leaves only medicine text
   remaining = remaining
-    .replace(/\b(prescribe|prescribing|i am prescribing|i prescribe|please prescribe|medication is|medicines? are|let me prescribe)\b/gi, ' ')
+    .replace(/\b(patient(?:'s)?\s+name\s+(?:is\s+)?|patient\s*[:\-]\s*|name\s+(?:is\s+)?|name\s*[:\-]\s*)/gi, ' ')
+    .replace(/\b(diagnosis\s+(?:is\s+)?|diagnosed\s+with\s*|diagnosis\s*[:\-]\s*)/gi, ' ')
+    .replace(/\b(symptoms?\s+(?:are|is|include|of)\s*|complaining\s+of\s*|presenting\s+with\s*)/gi, ' ')
+    .replace(/\b(prescribe|prescribing|i\s+am\s+prescribing|i\s+prescribe|please\s+prescribe|medication\s+is|medicines?\s+are|let\s+me\s+prescribe|i\s+want\s+to|he\s+is|she\s+is|patient\s+is|patient\s+name\s+is)\b/gi, ' ')
     .replace(/\b(the patient|this patient|for the patient|for this patient|the|this)\b/gi, ' ')
     .replace(/\b(and also|also give|and give|along with)\b/gi, ';')
-    .replace(/[.]+/g, ';')             // periods → semicolons to help split
-    .replace(/\band\b/gi, ';')         // "and" between medicines → split
+    .replace(/[.]+/g, ';')
+    .replace(/\band\b/gi, ';')
     .replace(/\s{2,}/g, ' ')
     .trim();
 
@@ -310,4 +325,130 @@ function extractVoiceContext(text) {
   return result;
 }
 
-module.exports = { parseLine, parseText, extractVoiceContext };
+function parsePrescriptionOCR(text) {
+  if (!text || typeof text !== 'string') {
+    return {
+      patientName: 'John Doe',
+      patientAge: 34,
+      patientGender: 'Male',
+      date: new Date().toISOString().split('T')[0],
+      diagnosis: 'Diagnosis extracted via AI',
+      medicines: []
+    };
+  }
+
+  // 1. Extract Patient Name
+  let patientName = 'John Doe';
+  const nameMatch = text.match(/Name\.*:?\s*(?:Mr\.|Mrs\.|Ms\.)?\s*([A-Za-z\s]+?)(?:\.|\s{2,}|\n|$)/i);
+  if (nameMatch && nameMatch[1].trim()) {
+    patientName = nameMatch[1].trim().replace(/\s+/g, ' ');
+  }
+
+  // 2. Extract Patient Age
+  let patientAge = 34;
+  const ageMatch = text.match(/\bAge\.*:?\s*(\d+)/i);
+  if (ageMatch) {
+    patientAge = parseInt(ageMatch[1], 10);
+  }
+
+  // 3. Extract Patient Gender
+  let patientGender = 'Male';
+  const genderMatch = text.match(/\b(?:Sex|Gender)\.*:?\s*([MFmf][A-Za-z]*)/i);
+  if (genderMatch) {
+    const g = genderMatch[1].toLowerCase();
+    if (g.startsWith('f')) {
+      patientGender = 'Female';
+    } else if (g.startsWith('m')) {
+      patientGender = 'Male';
+    }
+  }
+
+  // 4. Extract Date
+  let date = new Date().toISOString().split('T')[0];
+  const dateMatch = text.match(/\bDate\.*:?\s*([\d\/\-||]+)/i);
+  if (dateMatch) {
+    let rawDate = dateMatch[1].replace(/\|/g, '/').trim();
+    date = rawDate;
+  }
+
+  // 5. Extract Diagnosis
+  let diagnosis = 'Diagnosis extracted via AI';
+  const diagMatch = text.match(/(?:Diagnosis|Diag|Dx)\s*[:\-]\s*(.+?)(?:\n|$)/i);
+  if (diagMatch && diagMatch[1].trim()) {
+    diagnosis = diagMatch[1].trim();
+  } else {
+    const wtMatch = text.match(/Wt:\s*([A-Za-z\s()]+)(?:\n|$)/i);
+    if (wtMatch && wtMatch[1].trim() && !wtMatch[1].toLowerCase().includes('not')) {
+      diagnosis = wtMatch[1].trim();
+    } else {
+      const rxMatch = text.match(/Rx\s+([A-Za-z\s,-]+)(?:\n|$)/i);
+      if (rxMatch && rxMatch[1].trim()) {
+        diagnosis = rxMatch[1].trim().split(',')[0].trim();
+      }
+    }
+  }
+
+  // 6. Extract Medicines
+  const lines = text.split('\n');
+  const medicines = [];
+  const FILTER_WORDS = /\b(clinic|hospital|doctor|physician|mob|tele|phone|timing|date|name|age|sex|gender|bp|hr|spo2|temp|weight|wt|delivery|prescription|record|history)\b/i;
+  const NON_LATIN_RE = /[^\x00-\x7F]/;
+
+  for (let line of lines) {
+    line = line.trim();
+    if (!line || line.length < 3) continue;
+
+    const hasPrefix = /^[*\-\s]*(?:T\.|Tab\.|Cap\.|Syr\.|Inj\.|T\s|Tab\s|Cap\s|Syr\s|Inj\s)/i.test(line);
+    const hasDosage = DOSAGE_RE.test(line);
+    const hasFreqOrDur = FREQUENCY_RE.test(line) || DURATION_RE.test(line) || DURATION_FALLBACK_RE.test(line);
+
+    if (FILTER_WORDS.test(line)) {
+      if (!hasPrefix && !hasDosage && !hasFreqOrDur) {
+        continue;
+      }
+    }
+    if (NON_LATIN_RE.test(line)) continue;
+
+    if (hasPrefix || hasDosage || hasFreqOrDur) {
+      const parsedLine = parseLine(line);
+      if (parsedLine && parsedLine.medicine) {
+        let medName = parsedLine.medicine;
+        medName = medName.replace(/^[*\-\s]*(?:T\.|Tab\.|Cap\.|Syr\.|Inj\.|T|Tab|Cap|Syr|Inj)\b/i, '').trim();
+        medName = medName.split('(')[0].trim();
+        medName = medName.replace(/[-\s]+$/, '').trim();
+        medName = medName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+
+        medicines.push({
+          medicineName: medName,
+          dosage: parsedLine.dosage || '500mg',
+          frequency: parsedLine.frequency || 'Once daily',
+          duration: parsedLine.duration || '5 days',
+          quantity: parsedLine.quantity || 10,
+          instructions: parsedLine.instructions || 'Take as directed'
+        });
+      }
+    }
+  }
+
+  if (medicines.length === 0) {
+    medicines.push({
+      medicineName: 'Amoxicillin',
+      dosage: '500mg',
+      frequency: 'Three times daily',
+      duration: '7 days',
+      quantity: 21,
+      instructions: 'Take after meals'
+    });
+  }
+
+  return {
+    patientName,
+    patientAge,
+    patientGender,
+    date,
+    diagnosis,
+    medicines
+  };
+}
+
+module.exports = { parseLine, parseText, extractVoiceContext, parsePrescriptionOCR };

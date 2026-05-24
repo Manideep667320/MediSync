@@ -7,6 +7,7 @@ const { requireAdmin } = require('../middleware/roleCheck');
 // Public routes
 router.get('/', hospitalController.getHospitals);
 router.get('/:id', hospitalController.getHospital);
+router.get('/:hospitalId/doctors', hospitalController.getDoctors);
 
 // Admin only routes
 router.post('/', authenticate, requireAdmin, hospitalController.createHospital);

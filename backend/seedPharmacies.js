@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const Pharmacy = require('./models/Pharmacy');
+const PharmacyInventory = require('./models/PharmacyInventory');
 require('dotenv').config();
 
 const seedPharmacies = async () => {
@@ -9,7 +10,8 @@ const seedPharmacies = async () => {
 
         // Clear existing pharmacies primarily for clean testing
         await Pharmacy.deleteMany({});
-        console.log('Cleared existing pharmacies');
+        await PharmacyInventory.deleteMany({});
+        console.log('Cleared existing pharmacies and inventories');
 
         const pharmacies = [
             {
@@ -61,8 +63,25 @@ const seedPharmacies = async () => {
             }
         ];
 
-        await Pharmacy.insertMany(pharmacies);
+        const createdPharmacies = await Pharmacy.insertMany(pharmacies);
         console.log('Seeded 3 test pharmacies successfully!');
+
+        // Seed pharmacy inventories
+        console.log('Seeding pharmacy inventories...');
+        for (const created of createdPharmacies) {
+          const orig = pharmacies.find(p => p.licenseNumber === created.licenseNumber);
+          if (orig && orig.inventory) {
+            const invDocs = orig.inventory.map(item => ({
+              pharmacyId: created._id,
+              medicine: item.medicineName,
+              stock: item.stock,
+              price: item.price,
+              isAvailable: item.stock > 0
+            }));
+            await PharmacyInventory.insertMany(invDocs);
+          }
+        }
+        console.log('Pharmacy inventories seeded successfully!');
 
         // Create geolocation index just in case
         await Pharmacy.collection.createIndex({ location: "2dsphere" });

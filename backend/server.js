@@ -19,6 +19,7 @@ const patientRoutes = require('./routes/patient');
 const pharmacyRoutes = require('./routes/pharmacy');
 const localRoutes = require('./routes/local');
 const hospitalRoutes = require('./routes/hospital');
+const notificationRoutes = require('./routes/notifications');
 
 // Security middleware
 app.use(helmet());
@@ -93,6 +94,7 @@ app.use('/api/patient', patientRoutes);
 app.use('/api/pharmacy', pharmacyRoutes);
 app.use('/api/local', localRoutes);
 app.use('/api/hospitals', hospitalRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Error handling
 app.use(notFound);
